@@ -43,6 +43,7 @@ create table accommodations (
   booking_reference text,
   phone text,
   maps_url text,
+  photo_url text,
   updated_at timestamptz not null default now()
 );
 
@@ -64,6 +65,10 @@ create table transport_items (
   destination text,
   departure_time timestamptz,
   arrival_time timestamptz,
+  departure_terminal text,
+  departure_gate text,
+  arrival_terminal text,
+  delay_minutes int,
   maps_url text,
   status text,
   updated_at timestamptz not null default now()
@@ -90,7 +95,8 @@ create table destinations (
   summary text,
   restaurants jsonb,
   practical_tips jsonb,
-  bad_weather_alternatives jsonb
+  bad_weather_alternatives jsonb,
+  dive_shops jsonb
 );
 
 create table practical_info (

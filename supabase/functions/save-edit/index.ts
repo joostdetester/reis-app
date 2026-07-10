@@ -15,10 +15,24 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 // id, trip_id en gerelateerde sleutels staan hier bewust niet in.
 const EDITABLE_COLUMNS: Record<string, string[]> = {
   trip_days: ['location', 'island', 'day_type', 'morning_text', 'afternoon_text', 'evening_text', 'notes'],
-  accommodations: ['name', 'address', 'check_in', 'check_out', 'booking_reference', 'phone', 'maps_url'],
-  transport_items: ['type', 'carrier', 'booking_reference', 'origin', 'destination', 'departure_time', 'arrival_time', 'maps_url', 'status'],
+  accommodations: ['name', 'address', 'check_in', 'check_out', 'booking_reference', 'phone', 'maps_url', 'photo_url'],
+  transport_items: [
+    'type',
+    'carrier',
+    'booking_reference',
+    'origin',
+    'destination',
+    'departure_time',
+    'arrival_time',
+    'departure_terminal',
+    'departure_gate',
+    'arrival_terminal',
+    'delay_minutes',
+    'maps_url',
+    'status',
+  ],
   activities: ['title', 'day_part', 'exact_time', 'status', 'category', 'address', 'maps_url'],
-  destinations: ['name', 'summary', 'restaurants', 'practical_tips', 'bad_weather_alternatives'],
+  destinations: ['name', 'summary', 'restaurants', 'practical_tips', 'bad_weather_alternatives', 'dive_shops'],
   practical_info: ['section', 'title', 'content', 'sort_order'],
 }
 

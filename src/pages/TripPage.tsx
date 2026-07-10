@@ -1,14 +1,15 @@
-import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useTripDays } from '../hooks/useTripDays'
 import { useTransportItems } from '../hooks/useTransportItems'
 import { useAccommodations } from '../hooks/useAccommodations'
 import { useTripDayAccommodations } from '../hooks/useTripDayAccommodations'
+import { useDestinations } from '../hooks/useDestinations'
 import { DayCard } from '../components/DayCard'
-import { shortDate, todayIndex } from '../utils/dates'
+import { shortDate, todayIndex, tripPhase } from '../utils/dates'
 import { matchesQuery } from '../utils/search'
 import { buildDayAccommodationMap, type DayAccommodationInfo } from '../utils/dayAccommodations'
-import type { TransportItem, TripDay } from '../types/trip'
+import type { Destination, TransportItem, TripDay } from '../types/trip'
 
 type TripView = 'timeline' | 'destinations' | 'calendar'
 
@@ -40,7 +41,22 @@ function TimelineView({
   accommodationByDay: Map<string, DayAccommodationInfo>
 }) {
   const [search, setSearch] = useState('')
-  const i = todayIndex(days)
+  const [searchParams] = useSearchParams()
+  const targetDate = searchParams.get('day')
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  useEffect(() => {
+    if (!targetDate) return
+    cardRefs.current.get(targetDate)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [targetDate])
+
+  // Standaard: vóór de reis de eerste dag open, tijdens de reis alleen vandaag,
+  // na de reis alles dicht. Een expliciete ?day=... (vanuit Kalender) overstemt dit.
+  const phase = tripPhase(days)
+  const defaultOpenDate =
+    phase === 'before' ? days[0]?.travel_date : phase === 'during' ? days[todayIndex(days)]?.travel_date : null
+  const openDate = targetDate ?? defaultOpenDate
+
   const filtered = days.filter((d) => matchesQuery(d, search))
 
   return (
@@ -52,25 +68,29 @@ function TimelineView({
         onChange={(e) => setSearch(e.target.value)}
       />
       {filtered.map((d) => (
-        <DayCard
-          key={d.id}
-          day={d}
-          transportItems={transportItems}
-          accommodationInfo={accommodationByDay.get(d.id)}
-          collapsed={d.sort_order !== i && d.sort_order !== i + 1}
-        />
+        <div key={d.id} ref={(el) => void (el ? cardRefs.current.set(d.travel_date, el) : cardRefs.current.delete(d.travel_date))}>
+          <DayCard
+            day={d}
+            transportItems={transportItems}
+            accommodationInfo={accommodationByDay.get(d.id)}
+            collapsed={d.travel_date !== openDate}
+            showMapLink={false}
+            showActivityLink
+          />
+        </div>
       ))}
     </>
   )
 }
 
-function DestinationsView({ days }: { days: TripDay[] }) {
+function DestinationsView({ days, destinations }: { days: TripDay[]; destinations: Destination[] }) {
   const groups = new Map<string, TripDay[]>()
   for (const day of days) {
     const list = groups.get(day.island) ?? []
     list.push(day)
     groups.set(day.island, list)
   }
+  const destinationByName = new Map(destinations.map((d) => [d.name, d]))
 
   return (
     <div className="grid">
@@ -79,6 +99,7 @@ function DestinationsView({ days }: { days: TripDay[] }) {
           .flatMap((d) => [d.morning_text, d.afternoon_text, d.evening_text])
           .filter((v): v is string => Boolean(v))
           .slice(0, 6)
+        const diveShops = destinationByName.get(island)?.dive_shops
 
         return (
           <div className="list-card" key={island}>
@@ -89,6 +110,21 @@ function DestinationsView({ days }: { days: TripDay[] }) {
             <p>
               <b>Activiteiten:</b> {activities.length > 0 ? activities.join(', ') : '-'}
             </p>
+            {diveShops && diveShops.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div className="kicker">🤿 Duikbedrijven (PADI)</div>
+                {diveShops.map((shop) => (
+                  <div key={shop.name} style={{ marginTop: 8 }}>
+                    <a href={shop.url} target="_blank" rel="noreferrer">
+                      <b>{shop.name}</b>
+                    </a>
+                    <div className="muted" style={{ fontSize: 12 }}>
+                      {shop.distance_from_hotel} · {shop.price_indication}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )
       })}
@@ -100,10 +136,10 @@ function CalendarView({ days }: { days: TripDay[] }) {
   return (
     <div className="calendar-grid">
       {days.map((d) => (
-        <div key={d.id}>
+        <Link key={d.id} to={`/trip?view=timeline&day=${d.travel_date}`}>
           <b>{shortDate(d.travel_date)}</b>
           {d.location.split('→')[0]}
-        </div>
+        </Link>
       ))}
     </div>
   )
@@ -114,6 +150,7 @@ export function TripPage() {
   const { transportItems } = useTransportItems()
   const { accommodations } = useAccommodations()
   const { links } = useTripDayAccommodations()
+  const { destinations } = useDestinations()
   const [searchParams, setSearchParams] = useSearchParams()
   const view = (searchParams.get('view') as TripView) || 'timeline'
 
@@ -128,7 +165,7 @@ export function TripPage() {
       {view === 'timeline' && (
         <TimelineView days={days} transportItems={transportItems} accommodationByDay={accommodationByDay} />
       )}
-      {view === 'destinations' && <DestinationsView days={days} />}
+      {view === 'destinations' && <DestinationsView days={days} destinations={destinations} />}
       {view === 'calendar' && <CalendarView days={days} />}
     </>
   )

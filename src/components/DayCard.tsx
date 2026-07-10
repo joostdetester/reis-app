@@ -20,9 +20,11 @@ interface DayCardProps {
   transportItems?: TransportItem[]
   accommodationInfo?: DayAccommodationInfo
   collapsed?: boolean
+  showMapLink?: boolean
+  showActivityLink?: boolean
 }
 
-function TransportRow({ item }: { item: TransportItem }) {
+function TransportLine({ item }: { item: TransportItem }) {
   const summary = [item.type, item.carrier, item.booking_reference].filter(Boolean).join(' · ')
   const route = [item.origin, item.destination].filter(Boolean).join(' → ')
   const times = [item.departure_time, item.arrival_time]
@@ -31,19 +33,8 @@ function TransportRow({ item }: { item: TransportItem }) {
     .join(' → ')
 
   return (
-    <Link className="row" to="/transport">
-      <div>🚐</div>
-      <div>
-        <div className="kicker">Vervoer</div>
-        <div className="value">{summary || item.type}</div>
-        {(route || times) && (
-          <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
-            {route}
-            {times ? ` · ${times}` : ''}
-          </div>
-        )}
-      </div>
-      <span>›</span>
+    <Link className="day-transport" to="/transport" onClick={(e) => e.stopPropagation()}>
+      🚐 {[summary || item.type, route, times].filter(Boolean).join(' · ')}
     </Link>
   )
 }
@@ -61,11 +52,20 @@ function HotelLine({ info }: { info: DayAccommodationInfo }) {
   )
 }
 
-export function DayCard({ day, transportItems = [], accommodationInfo, collapsed = false }: DayCardProps) {
+export function DayCard({
+  day,
+  transportItems = [],
+  accommodationInfo,
+  collapsed = false,
+  showMapLink = true,
+  showActivityLink = false,
+}: DayCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(collapsed)
   const [editingPart, setEditingPart] = useState<PartField | null>(null)
 
+  const placeName = day.location.split('→')[0].replace(/\s*\([^)]*\)\s*$/, '').trim()
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.location + ' Philippines')}`
+  const getYourGuideUrl = `https://www.getyourguide.com/s/?q=${encodeURIComponent(placeName)}`
   const dayTransport = transportItems.filter((t) => t.trip_day_id === day.id)
 
   async function handleSavePart(field: PartField, value: string) {
@@ -80,13 +80,13 @@ export function DayCard({ day, transportItems = [], accommodationInfo, collapsed
           <div className="day-title">{day.location}</div>
           <div className="day-date">{fmtDate(day.travel_date)}</div>
           {accommodationInfo && <HotelLine info={accommodationInfo} />}
+          {dayTransport.map((item) => (
+            <TransportLine key={item.id} item={item} />
+          ))}
         </div>
         <span className={`badge ${day.day_type}`}>{day.day_type}</span>
       </div>
       <div className="day-body">
-        {dayTransport.map((item) => (
-          <TransportRow key={item.id} item={item} />
-        ))}
         <div className="parts">
           {(['morning_text', 'afternoon_text', 'evening_text'] as const).map((field) => (
             <div className="part" key={field}>
@@ -99,10 +99,18 @@ export function DayCard({ day, transportItems = [], accommodationInfo, collapsed
           ))}
         </div>
         <FieldRow icon="📝" label="Notitie" value={day.notes} table="trip_days" id={day.id} field="notes" placeholder="Geen notitie" />
-        <a className="map-link" href={mapsUrl} target="_blank" rel="noreferrer">
-          <span>📍 Open locatie in Google Maps</span>
-          <span>›</span>
-        </a>
+        {showMapLink && (
+          <a className="map-link" href={mapsUrl} target="_blank" rel="noreferrer">
+            <span>📍 Open locatie in Google Maps</span>
+            <span>›</span>
+          </a>
+        )}
+        {showActivityLink && (
+          <a className="map-link" href={getYourGuideUrl} target="_blank" rel="noreferrer">
+            <span>🎟️ Top activiteiten in {placeName} op GetYourGuide</span>
+            <span>›</span>
+          </a>
+        )}
       </div>
 
       {editingPart && (

@@ -25,6 +25,7 @@ export interface Accommodation {
   booking_reference: string | null
   phone: string | null
   maps_url: string | null
+  photo_url: string | null
   updated_at: string
 }
 
@@ -47,6 +48,10 @@ export interface TransportItem {
   destination: string | null
   departure_time: string | null
   arrival_time: string | null
+  departure_terminal: string | null
+  departure_gate: string | null
+  arrival_terminal: string | null
+  delay_minutes: number | null
   maps_url: string | null
   status: string | null
   updated_at: string
@@ -69,6 +74,13 @@ export interface Activity {
   updated_at: string
 }
 
+export interface DiveShop {
+  name: string
+  url: string
+  distance_from_hotel: string
+  price_indication: string
+}
+
 export interface Destination {
   id: string
   trip_id: string
@@ -77,6 +89,7 @@ export interface Destination {
   restaurants: unknown
   practical_tips: unknown
   bad_weather_alternatives: unknown
+  dive_shops: DiveShop[] | null
 }
 
 export interface PracticalInfo {

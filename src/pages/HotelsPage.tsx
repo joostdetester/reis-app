@@ -36,6 +36,13 @@ export function HotelsPage() {
 
           return (
             <div className="list-card" key={acc.id}>
+              {acc.photo_url && (
+                <img
+                  src={acc.photo_url}
+                  alt={acc.name}
+                  style={{ width: '100%', borderRadius: 12, marginBottom: 10, aspectRatio: '16/10', objectFit: 'cover' }}
+                />
+              )}
               <h3>{acc.name}</h3>
               {stayDays.length > 0 && (
                 <div className="muted">
@@ -60,6 +67,7 @@ export function HotelsPage() {
                 id={acc.id}
                 field="booking_reference"
               />
+              <FieldRow icon="🖼️" label="Foto-URL" value={acc.photo_url} table="accommodations" id={acc.id} field="photo_url" />
               <a target="_blank" rel="noreferrer" href={mapsUrl}>
                 Open in Google Maps
               </a>

@@ -78,3 +78,14 @@ export function fmtPhilippineTime(iso: string): string {
 export function formatTimeInZone(date: Date, timeZone: string): string {
   return new Intl.DateTimeFormat('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone }).format(date)
 }
+
+export type TripPhase = 'before' | 'during' | 'after'
+
+/** Bepaalt of de reis nog moet beginnen, aan de gang is, of al voorbij is (op basis van travel_date-range). */
+export function tripPhase<T extends { travel_date: string }>(days: T[], now: Date = new Date()): TripPhase {
+  if (days.length === 0) return 'before'
+  const today = todayIso(now)
+  if (today < days[0].travel_date) return 'before'
+  if (today > days[days.length - 1].travel_date) return 'after'
+  return 'during'
+}
