@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { TransportItem, TripDay } from '../types/trip'
 import type { DayAccommodationInfo } from '../utils/dayAccommodations'
-import { fmtDate, fmtDateTime, fmtPhilippineTime } from '../utils/dates'
+import { fmtDate, fmtLocalDateTime, fmtPhilippineTime } from '../utils/dates'
 import { EditSheet } from './EditSheet'
 import { FieldRow } from './FieldRow'
 import { saveEdit } from '../lib/saveEdit'
@@ -27,8 +27,10 @@ interface DayCardProps {
 function TransportLine({ item }: { item: TransportItem }) {
   const summary = [item.type, item.carrier, item.booking_reference].filter(Boolean).join(' · ')
   const route = [item.origin, item.destination].filter(Boolean).join(' → ')
-  const times = [item.departure_time, item.arrival_time]
-    .map((t) => (t ? fmtDateTime(t) : null))
+  const times = [
+    item.departure_time ? fmtLocalDateTime(item.departure_time, item.origin) : null,
+    item.arrival_time ? fmtLocalDateTime(item.arrival_time, item.destination) : null,
+  ]
     .filter((t): t is string => Boolean(t))
     .join(' → ')
 

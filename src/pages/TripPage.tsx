@@ -6,7 +6,7 @@ import { useAccommodations } from '../hooks/useAccommodations'
 import { useTripDayAccommodations } from '../hooks/useTripDayAccommodations'
 import { useDestinations } from '../hooks/useDestinations'
 import { DayCard } from '../components/DayCard'
-import { shortDate, todayIndex, tripPhase } from '../utils/dates'
+import { dayPartOf, fmtLocalDateTime, guessTimeZone, shortDate, subtractHours, todayIndex, tripPhase } from '../utils/dates'
 import { matchesQuery } from '../utils/search'
 import { buildDayAccommodationMap, type DayAccommodationInfo } from '../utils/dayAccommodations'
 import type { Destination, TransportItem, TripDay } from '../types/trip'
@@ -83,7 +83,41 @@ function TimelineView({
   )
 }
 
-function DestinationsView({ days, destinations }: { days: TripDay[]; destinations: Destination[] }) {
+/** De vlucht die het eiland verlaat: de eerste vervoersregel op de dag ná de laatste dag van dit eiland. */
+function findDepartureFlight(
+  islandDays: TripDay[],
+  allDays: TripDay[],
+  transportItems: TransportItem[],
+): TransportItem | null {
+  const lastDay = islandDays[islandDays.length - 1]
+  const nextDay = allDays.find((d) => d.sort_order === lastDay.sort_order + 1)
+  if (!nextDay) return null
+  return transportItems.find((t) => t.trip_day_id === nextDay.id && t.departure_time) ?? null
+}
+
+function LastDiveNotice({ flight }: { flight: TransportItem }) {
+  if (!flight.departure_time) return null
+  const lastDiveMoment = subtractHours(flight.departure_time, 18)
+  const zone = guessTimeZone(flight.origin)
+  const part = dayPartOf(lastDiveMoment, zone)
+
+  return (
+    <p className="notice" style={{ marginTop: 10 }}>
+      🤿 Laatste duik: {fmtLocalDateTime(lastDiveMoment.toISOString(), flight.origin)} ({part}) — minimaal 18 uur
+      voor de vlucht{flight.booking_reference ? ` (${flight.booking_reference})` : ''}
+    </p>
+  )
+}
+
+function DestinationsView({
+  days,
+  destinations,
+  transportItems,
+}: {
+  days: TripDay[]
+  destinations: Destination[]
+  transportItems: TransportItem[]
+}) {
   const groups = new Map<string, TripDay[]>()
   for (const day of days) {
     const list = groups.get(day.island) ?? []
@@ -100,6 +134,7 @@ function DestinationsView({ days, destinations }: { days: TripDay[]; destination
           .filter((v): v is string => Boolean(v))
           .slice(0, 6)
         const diveShops = destinationByName.get(island)?.dive_shops
+        const departureFlight = diveShops && diveShops.length > 0 ? findDepartureFlight(items, days, transportItems) : null
 
         return (
           <div className="list-card" key={island}>
@@ -123,6 +158,7 @@ function DestinationsView({ days, destinations }: { days: TripDay[]; destination
                     </div>
                   </div>
                 ))}
+                {departureFlight && <LastDiveNotice flight={departureFlight} />}
               </div>
             )}
           </div>
@@ -165,7 +201,9 @@ export function TripPage() {
       {view === 'timeline' && (
         <TimelineView days={days} transportItems={transportItems} accommodationByDay={accommodationByDay} />
       )}
-      {view === 'destinations' && <DestinationsView days={days} destinations={destinations} />}
+      {view === 'destinations' && (
+        <DestinationsView days={days} destinations={destinations} transportItems={transportItems} />
+      )}
       {view === 'calendar' && <CalendarView days={days} />}
     </>
   )

@@ -44,21 +44,45 @@ export function hoursUntil(iso: string, now: Date = new Date()): number | null {
   return Math.ceil(diffMs / 3_600_000)
 }
 
-const dateTimeFormatter = new Intl.DateTimeFormat('nl-NL', {
-  day: '2-digit',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-  timeZone: 'UTC',
-})
+// We slaan geen tijdzone per traject op, dus deze herkent een handjevol vaste
+// namen uit dit specifieke reisschema. Alles wat niet matcht valt terug op
+// Asia/Manila — correct voor vrijwel elke binnenlandse Filipijnse locatie.
+const LOCATION_TIMEZONES: [pattern: RegExp, zone: string][] = [
+  [/amsterdam|schiphol/i, 'Europe/Amsterdam'],
+  [/muscat/i, 'Asia/Muscat'],
+]
 
-/**
- * Toont een timestamptz in UTC (niet in de tijdzone van de kijker!). We slaan geen
- * lokale tijdzone per traject op, dus "20:25 lokale tijd op Schiphol" zou anders
- * stilzwijgend verkeerd worden weergegeven op een telefoon die al in Manila zit.
- */
-export function fmtDateTime(iso: string): string {
-  return `${dateTimeFormatter.format(new Date(iso))} UTC`
+export function guessTimeZone(locationName: string | null | undefined): string {
+  if (locationName) {
+    for (const [pattern, zone] of LOCATION_TIMEZONES) {
+      if (pattern.test(locationName)) return zone
+    }
+  }
+  return 'Asia/Manila'
+}
+
+/** Toont een timestamptz in de lokale tijd van `locationName` (zie guessTimeZone). */
+export function fmtLocalDateTime(iso: string, locationName: string | null | undefined): string {
+  return new Intl.DateTimeFormat('nl-NL', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: guessTimeZone(locationName),
+  }).format(new Date(iso))
+}
+
+/** Trekt een aantal uren van een timestamptz af. */
+export function subtractHours(iso: string, hours: number): Date {
+  return new Date(new Date(iso).getTime() - hours * 3_600_000)
+}
+
+/** Dagdeel (ochtend/middag/avond) van een tijdstip, in een gegeven tijdzone. */
+export function dayPartOf(date: Date, timeZone: string): 'ochtend' | 'middag' | 'avond' {
+  const hour = Number(new Intl.DateTimeFormat('en-US', { hour: '2-digit', hour12: false, timeZone }).format(date))
+  if (hour >= 6 && hour < 12) return 'ochtend'
+  if (hour >= 12 && hour < 18) return 'middag'
+  return 'avond'
 }
 
 const manilaTimeFormatter = new Intl.DateTimeFormat('nl-NL', {

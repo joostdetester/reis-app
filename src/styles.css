@@ -41,7 +41,7 @@ main{max-width:760px;margin:auto;padding:14px 14px 96px}
 .day-title{font-weight:900;font-size:18px}
 .day-date{font-size:13px;color:var(--muted);margin-top:3px}
 .day-hotel{display:inline-block;margin-top:6px;font-size:13px;font-weight:800;color:var(--sea);text-decoration:none}
-.day-transport{display:block;margin-top:6px;font-size:13px;font-weight:800;color:var(--ink);text-decoration:none}
+.day-transport{display:block;margin-top:6px;font-size:13px;font-weight:800;color:var(--sea);text-decoration:none}
 .badge{font-size:11px;font-weight:900;border-radius:999px;padding:6px 9px;height:max-content;background:#dff5ed;color:#167457}
 .badge.reisdag{background:#fff0e8;color:#a54d30}
 .day-body{padding:4px 16px 16px}

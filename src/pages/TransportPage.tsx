@@ -4,7 +4,7 @@ import { useTripDays } from '../hooks/useTripDays'
 import { FieldRow } from '../components/FieldRow'
 import { EditSheet } from '../components/EditSheet'
 import { saveEdit } from '../lib/saveEdit'
-import { fmtDate, fmtDateTime, hoursUntil } from '../utils/dates'
+import { fmtDate, fmtLocalDateTime, hoursUntil } from '../utils/dates'
 import type { TransportItem } from '../types/trip'
 
 function mapsSearchUrl(query: string): string {
@@ -87,9 +87,10 @@ export function TransportPage() {
               )}
               {(item.departure_time || item.arrival_time) && (
                 <p className="muted">
-                  {item.departure_time ? fmtDateTime(item.departure_time) : '-'}
+                  {item.departure_time ? fmtLocalDateTime(item.departure_time, item.origin) : '-'}
                   {' → '}
-                  {item.arrival_time ? fmtDateTime(item.arrival_time) : '-'}
+                  {item.arrival_time ? fmtLocalDateTime(item.arrival_time, item.destination) : '-'}
+                  {' (lokale tijd)'}
                 </p>
               )}
               <FieldRow icon="🔖" label="Boekingsnummer" value={item.booking_reference} table="transport_items" id={item.id} field="booking_reference" />
