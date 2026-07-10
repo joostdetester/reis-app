@@ -16,17 +16,20 @@ function Hero() {
       <p>23 juli – 13 augustus · 22 dagen</p>
       <WorldClock />
       <div className="top-actions">
-        <Link className="secondary" to="/search">
-          🔎 Zoeken
+        <Link className="secondary" to="/trip?view=timeline">
+          📜 Tijdlijn
         </Link>
-        <Link className="secondary" to="/practical">
-          ☰ Praktisch
+        <Link className="secondary" to="/trip?view=destinations">
+          🏝️ Bestemmingen
         </Link>
         <Link className="secondary" to="/trip?view=calendar">
           📅 Kalender
         </Link>
-        <Link className="secondary" to="/trip?view=destinations">
-          🧭 Ontdekken
+        <Link className="secondary" to="/practical">
+          ☰ Praktisch
+        </Link>
+        <Link className="secondary" to="/search">
+          🔎 Zoeken
         </Link>
       </div>
       <a

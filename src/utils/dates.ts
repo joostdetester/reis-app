@@ -72,6 +72,19 @@ export function fmtLocalDateTime(iso: string, locationName: string | null | unde
   }).format(new Date(iso))
 }
 
+/** Vertrektijd in lokale tijd vertrekland, met de aankomsttijd (lokale tijd aankomstland) erachter tussen haakjes. */
+export function formatFlightTimes(
+  departureTime: string | null,
+  arrivalTime: string | null,
+  origin: string | null | undefined,
+  destination: string | null | undefined,
+): string | null {
+  const departure = departureTime ? fmtLocalDateTime(departureTime, origin) : null
+  const arrival = arrivalTime ? fmtLocalDateTime(arrivalTime, destination) : null
+  if (departure && arrival) return `${departure} (${arrival})`
+  return departure ?? arrival
+}
+
 /** Trekt een aantal uren van een timestamptz af. */
 export function subtractHours(iso: string, hours: number): Date {
   return new Date(new Date(iso).getTime() - hours * 3_600_000)
@@ -89,6 +102,14 @@ export function formatDuration(startIso: string, endIso: string): string {
   const hours = Math.floor(totalMinutes / 60)
   const minutes = totalMinutes % 60
   return minutes > 0 ? `${hours}u ${minutes}m` : `${hours}u`
+}
+
+/** Duur tussen twee timestamptz-waarden, als "U:MM" (bv. vluchtduur "1:40"). */
+export function formatDurationHM(startIso: string, endIso: string): string {
+  const totalMinutes = Math.round((new Date(endIso).getTime() - new Date(startIso).getTime()) / 60_000)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return `${hours}:${String(minutes).padStart(2, '0')}`
 }
 
 /** Dagdeel (ochtend/middag/avond) van een tijdstip, in een gegeven tijdzone. */

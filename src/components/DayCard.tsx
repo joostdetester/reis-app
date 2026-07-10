@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { TransportItem, TripDay } from '../types/trip'
 import type { DayAccommodationInfo } from '../utils/dayAccommodations'
-import { fmtDate, fmtLocalDateTime, fmtPhilippineTime } from '../utils/dates'
+import { fmtDate, formatDurationHM, formatFlightTimes, fmtPhilippineTime } from '../utils/dates'
 import { EditSheet } from './EditSheet'
 import { FieldRow } from './FieldRow'
 import { saveEdit } from '../lib/saveEdit'
@@ -24,22 +24,17 @@ interface DayCardProps {
   lastDiveNotice?: string
 }
 
-/** Vertrektijd in lokale tijd vertrekland, met de aankomsttijd (lokale tijd aankomstland) erachter tussen haakjes. */
-function formatFlightTimes(item: TransportItem): string | null {
-  const departure = item.departure_time ? fmtLocalDateTime(item.departure_time, item.origin) : null
-  const arrival = item.arrival_time ? fmtLocalDateTime(item.arrival_time, item.destination) : null
-  if (departure && arrival) return `${departure} (${arrival})`
-  return departure ?? arrival
-}
-
 function TransportLine({ item }: { item: TransportItem }) {
   const summary = [item.type, item.carrier, item.booking_reference].filter(Boolean).join(' · ')
   const route = [item.origin, item.destination].filter(Boolean).join(' → ')
-  const times = formatFlightTimes(item)
+  const times = formatFlightTimes(item.departure_time, item.arrival_time, item.origin, item.destination)
+  const duration =
+    item.departure_time && item.arrival_time ? formatDurationHM(item.departure_time, item.arrival_time) : null
+  const timesWithDuration = times && duration ? `${times} - vluchtduur: ${duration}` : times
 
   return (
     <Link className="day-transport" to="/transport" onClick={(e) => e.stopPropagation()}>
-      🚐 {[summary || item.type, route, times].filter(Boolean).join(' · ')}
+      🚐 {[summary || item.type, route, timesWithDuration].filter(Boolean).join(' · ')}
     </Link>
   )
 }

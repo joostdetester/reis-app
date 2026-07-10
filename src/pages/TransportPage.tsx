@@ -5,6 +5,7 @@ import { FieldRow } from '../components/FieldRow'
 import { EditSheet } from '../components/EditSheet'
 import { saveEdit } from '../lib/saveEdit'
 import { cityLabel, fmtDate, fmtLocalDateTime, formatDuration, hoursUntil } from '../utils/dates'
+import { flightMapUrl } from '../utils/maps'
 import type { TransportItem } from '../types/trip'
 
 function mapsSearchUrl(query: string): string {
@@ -117,6 +118,11 @@ export function TransportPage() {
                 </p>
               )}
               <TransportTimes item={item} />
+              {flightMapUrl(item.origin, item.destination) && (
+                <a target="_blank" rel="noreferrer" href={flightMapUrl(item.origin, item.destination)!}>
+                  🗺️ Bekijk route op kaart
+                </a>
+              )}
               <FieldRow icon="🔖" label="Boekingsnummer" value={item.booking_reference} table="transport_items" id={item.id} field="booking_reference" />
               <FieldRow icon="🚌" label="Vervoerder" value={item.carrier} table="transport_items" id={item.id} field="carrier" />
               <FieldRow icon="📍" label="Vertreklocatie" value={item.origin} table="transport_items" id={item.id} field="origin" />
