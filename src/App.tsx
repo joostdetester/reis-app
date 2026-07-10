@@ -30,6 +30,14 @@ function Hero() {
           🗺️ Kaart
         </Link>
       </div>
+      <a
+        className="hero-credit"
+        href="https://commons.wikimedia.org/wiki/File:Nacpan_Beach.jpg"
+        target="_blank"
+        rel="noreferrer"
+      >
+        Foto: glwx, Nacpan Beach (CC BY-SA 3.0)
+      </a>
     </header>
   )
 }
