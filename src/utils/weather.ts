@@ -25,6 +25,9 @@ const KNOWN_LOCATIONS: KnownLocation[] = [
   MANILA,
 ]
 
+/** Bestemmingen voor de weer-kiezer op de Praktisch-pagina, in reisvolgorde (Muscat is enkel een tussenstop). */
+export const WEATHER_DESTINATIONS = ['Amsterdam', 'Manila', 'Puerto Princesa', 'El Nido', 'Cebu City', 'Moalboal', 'Siargao']
+
 function guessLocation(locationName: string | null | undefined): KnownLocation {
   if (locationName) {
     const match = KNOWN_LOCATIONS.find((l) => l.pattern.test(locationName))

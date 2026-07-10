@@ -170,7 +170,7 @@ function BlockFlights({
 
         return (
           <div key={item.id} style={{ marginTop: 6 }}>
-            <Link to="/transport">
+            <Link to={`/transport?item=${item.id}`}>
               {[item.type, item.carrier, item.booking_reference].filter(Boolean).join(' · ')}
             </Link>
             {route && ` · ${route}`}

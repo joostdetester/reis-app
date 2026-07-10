@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTransportItems } from '../hooks/useTransportItems'
 import { useTripDays } from '../hooks/useTripDays'
 import { FieldRow } from '../components/FieldRow'
@@ -78,8 +79,17 @@ function DelayField({ item }: { item: TransportItem }) {
 export function TransportPage() {
   const { transportItems, loading: loadingItems, error: errorItems } = useTransportItems()
   const { days, loading: loadingDays, error: errorDays } = useTripDays()
+  const [searchParams] = useSearchParams()
+  const targetId = searchParams.get('item')
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const loading = loadingItems || loadingDays
 
-  if (loadingItems || loadingDays) return <div className="notice">Laden…</div>
+  useEffect(() => {
+    if (!targetId || loading) return
+    cardRefs.current.get(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [targetId, loading])
+
+  if (loading) return <div className="notice">Laden…</div>
   const error = errorItems || errorDays
   if (error) return <div className="notice">{error}</div>
 
@@ -99,7 +109,11 @@ export function TransportPage() {
           const untilDeparture = item.departure_time ? hoursUntil(item.departure_time) : null
 
           return (
-            <div className="list-card" key={item.id}>
+            <div
+              className={`list-card ${item.id === targetId ? 'highlighted' : ''}`}
+              key={item.id}
+              ref={(el) => void (el ? cardRefs.current.set(item.id, el) : cardRefs.current.delete(item.id))}
+            >
               <h3>{day ? fmtDate(day.travel_date) : '-'}</h3>
               <div>{day?.location}</div>
               <p>

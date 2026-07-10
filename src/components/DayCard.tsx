@@ -34,7 +34,7 @@ function TransportLine({ item }: { item: TransportItem }) {
   const timesWithDuration = times && duration ? `${times} - vluchtduur: ${duration}` : times
 
   return (
-    <Link className="day-transport" to="/transport" onClick={(e) => e.stopPropagation()}>
+    <Link className="day-transport" to={`/transport?item=${item.id}`} onClick={(e) => e.stopPropagation()}>
       🚐 {[summary || item.type, route, timesWithDuration].filter(Boolean).join(' · ')}
     </Link>
   )
@@ -47,7 +47,7 @@ function HotelLine({ info }: { info: DayAccommodationInfo }) {
   if (isCheckOut && accommodation.check_out) parts.push(`uitchecken ${fmtPhilippineTime(accommodation.check_out)}`)
 
   return (
-    <Link className="day-hotel" to="/hotels" onClick={(e) => e.stopPropagation()}>
+    <Link className="day-hotel" to={`/hotels?item=${accommodation.id}`} onClick={(e) => e.stopPropagation()}>
       🏨 {parts.join(' · ')}
     </Link>
   )

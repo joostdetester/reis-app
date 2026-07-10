@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAccommodations } from '../hooks/useAccommodations'
 import { useTripDayAccommodations } from '../hooks/useTripDayAccommodations'
 import { useTripDays } from '../hooks/useTripDays'
@@ -8,8 +10,17 @@ export function HotelsPage() {
   const { accommodations, loading: loadingAcc, error: errorAcc } = useAccommodations()
   const { links, loading: loadingLinks, error: errorLinks } = useTripDayAccommodations()
   const { days, loading: loadingDays, error: errorDays } = useTripDays()
+  const [searchParams] = useSearchParams()
+  const targetId = searchParams.get('item')
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const loading = loadingAcc || loadingLinks || loadingDays
 
-  if (loadingAcc || loadingLinks || loadingDays) return <div className="notice">Laden…</div>
+  useEffect(() => {
+    if (!targetId || loading) return
+    cardRefs.current.get(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [targetId, loading])
+
+  if (loading) return <div className="notice">Laden…</div>
   const error = errorAcc || errorLinks || errorDays
   if (error) return <div className="notice">{error}</div>
 
@@ -36,7 +47,11 @@ export function HotelsPage() {
           const bookingUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(acc.name + ' Philippines')}`
 
           return (
-            <div className="list-card" key={acc.id}>
+            <div
+              className={`list-card ${acc.id === targetId ? 'highlighted' : ''}`}
+              key={acc.id}
+              ref={(el) => void (el ? cardRefs.current.set(acc.id, el) : cardRefs.current.delete(acc.id))}
+            >
               <h3>{acc.name}</h3>
               {stayDays.length > 0 && (
                 <div className="muted">
