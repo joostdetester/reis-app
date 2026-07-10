@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTripDays } from '../hooks/useTripDays'
+import { useTransportItems } from '../hooks/useTransportItems'
 import { DayCard } from '../components/DayCard'
 import { shortDate, todayIndex } from '../utils/dates'
 import { matchesQuery } from '../utils/search'
-import type { TripDay } from '../types/trip'
+import type { TransportItem, TripDay } from '../types/trip'
 
 type TripView = 'timeline' | 'destinations' | 'calendar'
 
@@ -26,7 +27,7 @@ function Toolbar({ view, onChange }: { view: TripView; onChange: (v: TripView) =
   )
 }
 
-function TimelineView({ days }: { days: TripDay[] }) {
+function TimelineView({ days, transportItems }: { days: TripDay[]; transportItems: TransportItem[] }) {
   const [search, setSearch] = useState('')
   const i = todayIndex(days)
   const filtered = days.filter((d) => matchesQuery(d, search))
@@ -40,7 +41,12 @@ function TimelineView({ days }: { days: TripDay[] }) {
         onChange={(e) => setSearch(e.target.value)}
       />
       {filtered.map((d) => (
-        <DayCard key={d.id} day={d} collapsed={d.sort_order !== i && d.sort_order !== i + 1} />
+        <DayCard
+          key={d.id}
+          day={d}
+          transportItems={transportItems}
+          collapsed={d.sort_order !== i && d.sort_order !== i + 1}
+        />
       ))}
     </>
   )
@@ -93,6 +99,7 @@ function CalendarView({ days }: { days: TripDay[] }) {
 
 export function TripPage() {
   const { days, loading, error } = useTripDays()
+  const { transportItems } = useTransportItems()
   const [searchParams, setSearchParams] = useSearchParams()
   const view = (searchParams.get('view') as TripView) || 'timeline'
 
@@ -102,7 +109,7 @@ export function TripPage() {
   return (
     <>
       <Toolbar view={view} onChange={(v) => setSearchParams({ view: v })} />
-      {view === 'timeline' && <TimelineView days={days} />}
+      {view === 'timeline' && <TimelineView days={days} transportItems={transportItems} />}
       {view === 'destinations' && <DestinationsView days={days} />}
       {view === 'calendar' && <CalendarView days={days} />}
     </>

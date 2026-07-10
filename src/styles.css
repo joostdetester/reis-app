@@ -29,7 +29,7 @@ main{max-width:760px;margin:auto;padding:14px 14px 96px}
 .badge{font-size:11px;font-weight:900;border-radius:999px;padding:6px 9px;height:max-content;background:#dff5ed;color:#167457}
 .badge.reisdag{background:#fff0e8;color:#a54d30}
 .day-body{padding:4px 16px 16px}
-.row{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:start;padding:10px 0;border-bottom:1px solid #edf2f4}
+.row{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:start;padding:10px 0;border-bottom:1px solid #edf2f4;text-decoration:none}
 .row:last-child{border-bottom:0}
 .value{font-weight:800;margin-top:2px}
 .edit{border:0;border-radius:10px;background:#eef7f8;color:var(--sea);font-weight:900;padding:7px 9px}

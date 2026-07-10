@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import type { TripDay } from '../types/trip'
-import { fmtDate } from '../utils/dates'
+import { Link } from 'react-router-dom'
+import type { TransportItem, TripDay } from '../types/trip'
+import { fmtDate, fmtDateTime } from '../utils/dates'
 import { EditSheet } from './EditSheet'
 import { FieldRow } from './FieldRow'
 import { saveEdit } from '../lib/saveEdit'
@@ -15,14 +16,38 @@ const PART_LABELS: Record<PartField, string> = {
 
 interface DayCardProps {
   day: TripDay
+  transportItems?: TransportItem[]
   collapsed?: boolean
 }
 
-export function DayCard({ day, collapsed = false }: DayCardProps) {
+function TransportRow({ item }: { item: TransportItem }) {
+  const summary = [item.type, item.carrier, item.booking_reference].filter(Boolean).join(' · ')
+  const route = [item.origin, item.destination].filter(Boolean).join(' → ')
+
+  return (
+    <Link className="row" to="/transport">
+      <div>🚐</div>
+      <div>
+        <div className="kicker">Vervoer</div>
+        <div className="value">{summary || item.type}</div>
+        {(route || item.departure_time) && (
+          <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
+            {route}
+            {item.departure_time ? ` · ${fmtDateTime(item.departure_time)}` : ''}
+          </div>
+        )}
+      </div>
+      <span>›</span>
+    </Link>
+  )
+}
+
+export function DayCard({ day, transportItems = [], collapsed = false }: DayCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(collapsed)
   const [editingPart, setEditingPart] = useState<PartField | null>(null)
 
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.location + ' Philippines')}`
+  const dayTransport = transportItems.filter((t) => t.trip_day_id === day.id)
 
   async function handleSavePart(field: PartField, value: string) {
     await saveEdit('trip_days', day.id, { [field]: value || null })
@@ -39,6 +64,9 @@ export function DayCard({ day, collapsed = false }: DayCardProps) {
         <span className={`badge ${day.day_type}`}>{day.day_type}</span>
       </div>
       <div className="day-body">
+        {dayTransport.map((item) => (
+          <TransportRow key={item.id} item={item} />
+        ))}
         <div className="parts">
           {(['morning_text', 'afternoon_text', 'evening_text'] as const).map((field) => (
             <div className="part" key={field}>
