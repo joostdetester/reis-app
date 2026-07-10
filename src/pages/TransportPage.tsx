@@ -4,11 +4,42 @@ import { useTripDays } from '../hooks/useTripDays'
 import { FieldRow } from '../components/FieldRow'
 import { EditSheet } from '../components/EditSheet'
 import { saveEdit } from '../lib/saveEdit'
-import { fmtDate, fmtLocalDateTime, hoursUntil } from '../utils/dates'
+import { cityLabel, fmtDate, fmtLocalDateTime, formatDuration, hoursUntil } from '../utils/dates'
 import type { TransportItem } from '../types/trip'
 
 function mapsSearchUrl(query: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+}
+
+function TransportTimes({ item }: { item: TransportItem }) {
+  if (!item.departure_time && !item.arrival_time) return null
+
+  const originLabel = cityLabel(item.origin)
+  const destinationLabel = cityLabel(item.destination)
+
+  return (
+    <div className="muted" style={{ fontSize: 13, lineHeight: 1.7 }}>
+      {item.departure_time && (
+        <div>
+          Vertrek: {fmtLocalDateTime(item.departure_time, item.origin)}
+          {originLabel ? ` (${originLabel})` : ''}
+        </div>
+      )}
+      {item.departure_time && item.arrival_time && (
+        <div>
+          Aankomst: {fmtLocalDateTime(item.arrival_time, item.origin)}
+          {originLabel ? ` (${originLabel}-tijd)` : ''}
+        </div>
+      )}
+      {item.departure_time && item.arrival_time && <div>Duur: {formatDuration(item.departure_time, item.arrival_time)}</div>}
+      {item.arrival_time && (
+        <div>
+          Aankomst: {fmtLocalDateTime(item.arrival_time, item.destination)}
+          {destinationLabel ? ` (${destinationLabel}-tijd)` : ''}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function DelayField({ item }: { item: TransportItem }) {
@@ -85,14 +116,7 @@ export function TransportPage() {
                   {item.origin ?? '-'} → {item.destination ?? '-'}
                 </p>
               )}
-              {(item.departure_time || item.arrival_time) && (
-                <p className="muted">
-                  {item.departure_time ? fmtLocalDateTime(item.departure_time, item.origin) : '-'}
-                  {' → '}
-                  {item.arrival_time ? fmtLocalDateTime(item.arrival_time, item.destination) : '-'}
-                  {' (lokale tijd)'}
-                </p>
-              )}
+              <TransportTimes item={item} />
               <FieldRow icon="🔖" label="Boekingsnummer" value={item.booking_reference} table="transport_items" id={item.id} field="booking_reference" />
               <FieldRow icon="🚌" label="Vervoerder" value={item.carrier} table="transport_items" id={item.id} field="carrier" />
               <FieldRow icon="📍" label="Vertreklocatie" value={item.origin} table="transport_items" id={item.id} field="origin" />

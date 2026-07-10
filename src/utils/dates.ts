@@ -77,6 +77,20 @@ export function subtractHours(iso: string, hours: number): Date {
   return new Date(new Date(iso).getTime() - hours * 3_600_000)
 }
 
+/** Korte plaatsnaam voor tijdzone-labels, bv. "Amsterdam (AMS)" -> "Amsterdam". */
+export function cityLabel(locationName: string | null | undefined): string {
+  if (!locationName) return ''
+  return locationName.split('(')[0].trim()
+}
+
+/** Duur tussen twee timestamptz-waarden, als "Xu Ym" (tijdzone-onafhankelijk). */
+export function formatDuration(startIso: string, endIso: string): string {
+  const totalMinutes = Math.round((new Date(endIso).getTime() - new Date(startIso).getTime()) / 60_000)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return minutes > 0 ? `${hours}u ${minutes}m` : `${hours}u`
+}
+
 /** Dagdeel (ochtend/middag/avond) van een tijdstip, in een gegeven tijdzone. */
 export function dayPartOf(date: Date, timeZone: string): 'ochtend' | 'middag' | 'avond' {
   const hour = Number(new Intl.DateTimeFormat('en-US', { hour: '2-digit', hour12: false, timeZone }).format(date))
