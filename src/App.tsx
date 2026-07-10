@@ -34,11 +34,11 @@ function Hero() {
       </div>
       <a
         className="hero-credit"
-        href="https://commons.wikimedia.org/wiki/File:Nacpan_Beach.jpg"
+        href="https://commons.wikimedia.org/wiki/File:Beach_in_El_Nido_Bay,_pure_tropical_bliss,_Palawan,_Philippines.jpg"
         target="_blank"
         rel="noreferrer"
       >
-        Foto: glwx, Nacpan Beach (CC BY-SA 3.0)
+        Foto: Vyacheslav Argenberg, El Nido Bay (CC BY 4.0)
       </a>
     </header>
   )

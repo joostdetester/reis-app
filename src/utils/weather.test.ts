@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { guessCoords, isBadTravelWeather, weatherCodeInfo, type DailyForecast } from './weather'
+import { beachScore, guessCoords, isBadTravelWeather, weatherCodeInfo, type DailyForecast } from './weather'
 
 function forecast(overrides: Partial<DailyForecast>): DailyForecast {
-  return { date: '2026-07-25', tempMax: 30, tempMin: 24, precipitationSum: 0, weatherCode: 0, ...overrides }
+  return {
+    date: '2026-07-25',
+    tempMax: 30,
+    tempMin: 24,
+    precipitationSum: 0,
+    weatherCode: 0,
+    windSpeedMax: 10,
+    ...overrides,
+  }
 }
 
 describe('guessCoords', () => {
@@ -39,5 +47,34 @@ describe('isBadTravelWeather', () => {
 
   it('waarschuwt niet bij droog, helder weer', () => {
     expect(isBadTravelWeather(forecast({ precipitationSum: 0, weatherCode: 1 }))).toBe(false)
+  })
+})
+
+describe('beachScore', () => {
+  it('geeft een hoog cijfer bij droog, warm, windstil weer', () => {
+    const { score, label } = beachScore(forecast({ tempMax: 31, precipitationSum: 0, windSpeedMax: 10 }))
+    expect(score).toBe(10)
+    expect(label).toBe('Uitstekend strandweer')
+  })
+
+  it('trekt punten af voor neerslag', () => {
+    const { score } = beachScore(forecast({ precipitationSum: 15 }))
+    expect(score).toBe(7)
+  })
+
+  it('trekt punten af voor veel wind', () => {
+    const { score } = beachScore(forecast({ windSpeedMax: 45 }))
+    expect(score).toBe(7)
+  })
+
+  it('trekt punten af voor een koele dag', () => {
+    const { score } = beachScore(forecast({ tempMax: 22 }))
+    expect(score).toBe(7)
+  })
+
+  it('cijfer zakt nooit onder 0', () => {
+    const { score, label } = beachScore(forecast({ tempMax: 20, precipitationSum: 60, windSpeedMax: 50 }))
+    expect(score).toBe(0)
+    expect(label).toBe('Slecht strandweer')
   })
 })

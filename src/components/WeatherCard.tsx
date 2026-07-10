@@ -1,6 +1,6 @@
 import { useWeather } from '../hooks/useWeather'
 import { shortDate } from '../utils/dates'
-import { guessWeatherLabel, isBadTravelWeather, weatherCodeInfo } from '../utils/weather'
+import { beachScore, guessWeatherLabel, isBadTravelWeather, weatherCodeInfo } from '../utils/weather'
 
 export function WeatherCard({ location }: { location: string | null | undefined }) {
   const { weather, loading, error } = useWeather(location)
@@ -10,6 +10,7 @@ export function WeatherCard({ location }: { location: string | null | undefined 
 
   const current = weatherCodeInfo(weather.current.weatherCode)
   const badDays = weather.daily.filter(isBadTravelWeather)
+  const today = beachScore(weather.daily[0])
 
   return (
     <div className="panel">
@@ -19,6 +20,11 @@ export function WeatherCard({ location }: { location: string | null | undefined 
         <div>
           <strong>{Math.round(weather.current.temp)}°C</strong>
           <div className="muted" style={{ fontSize: 13 }}>{current.label}</div>
+        </div>
+        <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+          <div className="kicker">🏖️ Strandcijfer</div>
+          <strong>{today.score}/10</strong>
+          <div className="muted" style={{ fontSize: 12 }}>{today.label}</div>
         </div>
       </div>
       <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>

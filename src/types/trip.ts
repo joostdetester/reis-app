@@ -79,6 +79,8 @@ export interface DiveShop {
   url: string
   distance_from_hotel: string
   price_indication: string
+  rating?: number
+  rating_count?: number
 }
 
 export interface Destination {

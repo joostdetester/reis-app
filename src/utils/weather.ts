@@ -81,6 +81,7 @@ export interface DailyForecast {
   tempMin: number
   precipitationSum: number
   weatherCode: number
+  windSpeedMax: number
 }
 
 export interface CurrentWeather {
@@ -99,12 +100,47 @@ export function isBadTravelWeather(day: DailyForecast): boolean {
   return day.precipitationSum >= HEAVY_RAIN_MM || BAD_TRAVEL_CODES.has(day.weatherCode)
 }
 
+export interface BeachScore {
+  score: number
+  label: string
+}
+
+/**
+ * Strandcijfer (0-10) op basis van neerslag, wind en temperatuur van die dag —
+ * een simpele, transparante afleiding uit de weerdata, geen aparte databron.
+ */
+export function beachScore(day: DailyForecast): BeachScore {
+  let score = 10
+
+  if (day.tempMax < 24) score -= 3
+  else if (day.tempMax < 27) score -= 1
+  else if (day.tempMax > 34) score -= 1
+
+  score -= Math.min(day.precipitationSum / 5, 5)
+
+  if (day.windSpeedMax > 40) score -= 3
+  else if (day.windSpeedMax > 25) score -= 1
+
+  score = Math.max(0, Math.min(10, Math.round(score * 2) / 2))
+
+  const label =
+    score >= 8.5
+      ? 'Uitstekend strandweer'
+      : score >= 7
+        ? 'Goed strandweer'
+        : score >= 5
+          ? 'Matig strandweer'
+          : 'Slecht strandweer'
+
+  return { score, label }
+}
+
 export async function fetchWeather(coords: Coords): Promise<WeatherData> {
   const params = new URLSearchParams({
     latitude: String(coords.lat),
     longitude: String(coords.lon),
     current: 'temperature_2m,precipitation,weather_code',
-    daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code',
+    daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,wind_speed_10m_max',
     timezone: 'auto',
     forecast_days: '3',
   })
@@ -118,6 +154,7 @@ export async function fetchWeather(coords: Coords): Promise<WeatherData> {
     tempMin: json.daily.temperature_2m_min[i],
     precipitationSum: json.daily.precipitation_sum[i],
     weatherCode: json.daily.weather_code[i],
+    windSpeedMax: json.daily.wind_speed_10m_max[i],
   }))
 
   return {

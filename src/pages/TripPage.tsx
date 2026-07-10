@@ -211,6 +211,8 @@ function DestinationsView({
           .slice(0, 6)
         const destination = destinationByName.get(block.name)
         const diveShops = destination?.dive_shops
+          ? [...destination.dive_shops].sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1))
+          : destination?.dive_shops
         const getYourGuideUrl = `https://www.getyourguide.com/s/?q=${encodeURIComponent(block.name)}`
 
         return (
@@ -254,6 +256,13 @@ function DestinationsView({
                     <a href={shop.url} target="_blank" rel="noreferrer">
                       <b>{shop.name}</b>
                     </a>
+                    {shop.rating != null && (
+                      <span className="muted" style={{ fontSize: 12 }}>
+                        {' '}
+                        · ⭐ {shop.rating.toFixed(1)}
+                        {shop.rating_count != null && ` (${shop.rating_count})`}
+                      </span>
+                    )}
                     <div className="muted" style={{ fontSize: 12 }}>
                       {shop.distance_from_hotel} · {shop.price_indication}
                     </div>
