@@ -90,6 +90,7 @@ export interface Destination {
   practical_tips: unknown
   bad_weather_alternatives: unknown
   dive_shops: DiveShop[] | null
+  photo_url: string | null
 }
 
 export interface PracticalInfo {

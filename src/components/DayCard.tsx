@@ -21,18 +21,21 @@ interface DayCardProps {
   accommodationInfo?: DayAccommodationInfo
   collapsed?: boolean
   showMapLink?: boolean
-  showActivityLink?: boolean
+  lastDiveNotice?: string
+}
+
+/** Vertrektijd in lokale tijd vertrekland, met de aankomsttijd (lokale tijd aankomstland) erachter tussen haakjes. */
+function formatFlightTimes(item: TransportItem): string | null {
+  const departure = item.departure_time ? fmtLocalDateTime(item.departure_time, item.origin) : null
+  const arrival = item.arrival_time ? fmtLocalDateTime(item.arrival_time, item.destination) : null
+  if (departure && arrival) return `${departure} (${arrival})`
+  return departure ?? arrival
 }
 
 function TransportLine({ item }: { item: TransportItem }) {
   const summary = [item.type, item.carrier, item.booking_reference].filter(Boolean).join(' · ')
   const route = [item.origin, item.destination].filter(Boolean).join(' → ')
-  const times = [
-    item.departure_time ? fmtLocalDateTime(item.departure_time, item.origin) : null,
-    item.arrival_time ? fmtLocalDateTime(item.arrival_time, item.destination) : null,
-  ]
-    .filter((t): t is string => Boolean(t))
-    .join(' → ')
+  const times = formatFlightTimes(item)
 
   return (
     <Link className="day-transport" to="/transport" onClick={(e) => e.stopPropagation()}>
@@ -60,14 +63,12 @@ export function DayCard({
   accommodationInfo,
   collapsed = false,
   showMapLink = true,
-  showActivityLink = false,
+  lastDiveNotice,
 }: DayCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(collapsed)
   const [editingPart, setEditingPart] = useState<PartField | null>(null)
 
-  const placeName = day.location.split('→')[0].replace(/\s*\([^)]*\)\s*$/, '').trim()
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.location + ' Philippines')}`
-  const getYourGuideUrl = `https://www.getyourguide.com/s/?q=${encodeURIComponent(placeName)}`
   const dayTransport = transportItems.filter((t) => t.trip_day_id === day.id)
 
   async function handleSavePart(field: PartField, value: string) {
@@ -85,6 +86,7 @@ export function DayCard({
           {dayTransport.map((item) => (
             <TransportLine key={item.id} item={item} />
           ))}
+          {lastDiveNotice && <div className="day-notice">{lastDiveNotice}</div>}
         </div>
         <span className={`badge ${day.day_type}`}>{day.day_type}</span>
       </div>
@@ -104,12 +106,6 @@ export function DayCard({
         {showMapLink && (
           <a className="map-link" href={mapsUrl} target="_blank" rel="noreferrer">
             <span>📍 Open locatie in Google Maps</span>
-            <span>›</span>
-          </a>
-        )}
-        {showActivityLink && (
-          <a className="map-link" href={getYourGuideUrl} target="_blank" rel="noreferrer">
-            <span>🎟️ Top activiteiten in {placeName} op GetYourGuide</span>
             <span>›</span>
           </a>
         )}

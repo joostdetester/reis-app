@@ -32,7 +32,7 @@ const EDITABLE_COLUMNS: Record<string, string[]> = {
     'status',
   ],
   activities: ['title', 'day_part', 'exact_time', 'status', 'category', 'address', 'maps_url'],
-  destinations: ['name', 'summary', 'restaurants', 'practical_tips', 'bad_weather_alternatives', 'dive_shops'],
+  destinations: ['name', 'summary', 'restaurants', 'practical_tips', 'bad_weather_alternatives', 'dive_shops', 'photo_url'],
   practical_info: ['section', 'title', 'content', 'sort_order'],
 }
 

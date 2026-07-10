@@ -96,7 +96,8 @@ create table destinations (
   restaurants jsonb,
   practical_tips jsonb,
   bad_weather_alternatives jsonb,
-  dive_shops jsonb
+  dive_shops jsonb,
+  photo_url text
 );
 
 create table practical_info (

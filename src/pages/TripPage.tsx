@@ -6,10 +6,27 @@ import { useAccommodations } from '../hooks/useAccommodations'
 import { useTripDayAccommodations } from '../hooks/useTripDayAccommodations'
 import { useDestinations } from '../hooks/useDestinations'
 import { DayCard } from '../components/DayCard'
-import { dayPartOf, fmtLocalDateTime, guessTimeZone, shortDate, subtractHours, todayIndex, tripPhase } from '../utils/dates'
+import { shortDate, todayIndex, tripPhase } from '../utils/dates'
 import { matchesQuery } from '../utils/search'
 import { buildDayAccommodationMap, type DayAccommodationInfo } from '../utils/dayAccommodations'
+import { computeLastDiveInfo } from '../utils/lastDive'
 import type { Destination, TransportItem, TripDay } from '../types/trip'
+
+// Bronvermelding voor de bestemmingsfoto's (CC BY-SA vereist credit + link naar de bron).
+const PHOTO_CREDITS: Record<string, { text: string; url: string }> = {
+  Palawan: {
+    text: 'Foto: Marciano Villavito, Big Lagoon El Nido (CC BY-SA 4.0)',
+    url: 'https://commons.wikimedia.org/wiki/File:Big_Lagoon_at_El_Nido,_Palawan,_Philippines.jpg',
+  },
+  Cebu: {
+    text: 'Foto: Lindstrm, White Beach Moalboal (CC BY-SA 3.0)',
+    url: 'https://commons.wikimedia.org/wiki/File:White_Beach_Moalboal.JPG',
+  },
+  Siargao: {
+    text: 'Foto: Alsitjar, Cloud 9 (CC BY-SA 4.0)',
+    url: 'https://commons.wikimedia.org/wiki/File:Cloud_9_Siargao_Island_Sunset.jpg',
+  },
+}
 
 type TripView = 'timeline' | 'destinations' | 'calendar'
 
@@ -35,10 +52,12 @@ function TimelineView({
   days,
   transportItems,
   accommodationByDay,
+  lastDiveByDayId,
 }: {
   days: TripDay[]
   transportItems: TransportItem[]
   accommodationByDay: Map<string, DayAccommodationInfo>
+  lastDiveByDayId: Map<string, string>
 }) {
   const [search, setSearch] = useState('')
   const [searchParams] = useSearchParams()
@@ -75,7 +94,7 @@ function TimelineView({
             accommodationInfo={accommodationByDay.get(d.id)}
             collapsed={d.travel_date !== openDate}
             showMapLink={false}
-            showActivityLink
+            lastDiveNotice={lastDiveByDayId.get(d.id)}
           />
         </div>
       ))}
@@ -83,40 +102,12 @@ function TimelineView({
   )
 }
 
-/** De vlucht die het eiland verlaat: de eerste vervoersregel op de dag ná de laatste dag van dit eiland. */
-function findDepartureFlight(
-  islandDays: TripDay[],
-  allDays: TripDay[],
-  transportItems: TransportItem[],
-): TransportItem | null {
-  const lastDay = islandDays[islandDays.length - 1]
-  const nextDay = allDays.find((d) => d.sort_order === lastDay.sort_order + 1)
-  if (!nextDay) return null
-  return transportItems.find((t) => t.trip_day_id === nextDay.id && t.departure_time) ?? null
-}
-
-function LastDiveNotice({ flight }: { flight: TransportItem }) {
-  if (!flight.departure_time) return null
-  const lastDiveMoment = subtractHours(flight.departure_time, 18)
-  const zone = guessTimeZone(flight.origin)
-  const part = dayPartOf(lastDiveMoment, zone)
-
-  return (
-    <p className="notice" style={{ marginTop: 10 }}>
-      🤿 Laatste duik: {fmtLocalDateTime(lastDiveMoment.toISOString(), flight.origin)} ({part}) — minimaal 18 uur
-      voor de vlucht{flight.booking_reference ? ` (${flight.booking_reference})` : ''}
-    </p>
-  )
-}
-
 function DestinationsView({
   days,
   destinations,
-  transportItems,
 }: {
   days: TripDay[]
   destinations: Destination[]
-  transportItems: TransportItem[]
 }) {
   const groups = new Map<string, TripDay[]>()
   for (const day of days) {
@@ -133,11 +124,32 @@ function DestinationsView({
           .flatMap((d) => [d.morning_text, d.afternoon_text, d.evening_text])
           .filter((v): v is string => Boolean(v))
           .slice(0, 6)
-        const diveShops = destinationByName.get(island)?.dive_shops
-        const departureFlight = diveShops && diveShops.length > 0 ? findDepartureFlight(items, days, transportItems) : null
+        const destination = destinationByName.get(island)
+        const diveShops = destination?.dive_shops
+        const getYourGuideUrl = `https://www.getyourguide.com/s/?q=${encodeURIComponent(island)}`
 
         return (
           <div className="list-card" key={island}>
+            {destination?.photo_url && (
+              <>
+                <img
+                  src={destination.photo_url}
+                  alt={island}
+                  style={{ width: '100%', borderRadius: 12, aspectRatio: '16/10', objectFit: 'cover' }}
+                />
+                {PHOTO_CREDITS[island] && (
+                  <a
+                    className="muted"
+                    style={{ fontSize: 10, display: 'block', marginBottom: 8 }}
+                    href={PHOTO_CREDITS[island].url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {PHOTO_CREDITS[island].text}
+                  </a>
+                )}
+              </>
+            )}
             <h3>{island}</h3>
             <div className="muted">
               {shortDate(items[0].travel_date)} – {shortDate(items[items.length - 1].travel_date)}
@@ -145,9 +157,12 @@ function DestinationsView({
             <p>
               <b>Activiteiten:</b> {activities.length > 0 ? activities.join(', ') : '-'}
             </p>
+            <a target="_blank" rel="noreferrer" href={getYourGuideUrl}>
+              🎟️ Top activiteiten in {island} op GetYourGuide
+            </a>
             {diveShops && diveShops.length > 0 && (
               <div style={{ marginTop: 10 }}>
-                <div className="kicker">🤿 Duikbedrijven (PADI)</div>
+                <div className="kicker">🤿 Duikcentra (PADI)</div>
                 {diveShops.map((shop) => (
                   <div key={shop.name} style={{ marginTop: 8 }}>
                     <a href={shop.url} target="_blank" rel="noreferrer">
@@ -158,7 +173,6 @@ function DestinationsView({
                     </div>
                   </div>
                 ))}
-                {departureFlight && <LastDiveNotice flight={departureFlight} />}
               </div>
             )}
           </div>
@@ -194,16 +208,20 @@ export function TripPage() {
   if (error) return <div className="notice">{error}</div>
 
   const accommodationByDay = buildDayAccommodationMap(days, links, accommodations)
+  const lastDiveByDayId = new Map(computeLastDiveInfo(days, destinations, transportItems).map((i) => [i.lastDayId, i.text]))
 
   return (
     <>
       <Toolbar view={view} onChange={(v) => setSearchParams({ view: v })} />
       {view === 'timeline' && (
-        <TimelineView days={days} transportItems={transportItems} accommodationByDay={accommodationByDay} />
+        <TimelineView
+          days={days}
+          transportItems={transportItems}
+          accommodationByDay={accommodationByDay}
+          lastDiveByDayId={lastDiveByDayId}
+        />
       )}
-      {view === 'destinations' && (
-        <DestinationsView days={days} destinations={destinations} transportItems={transportItems} />
-      )}
+      {view === 'destinations' && <DestinationsView days={days} destinations={destinations} />}
       {view === 'calendar' && <CalendarView days={days} />}
     </>
   )

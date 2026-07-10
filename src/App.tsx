@@ -7,7 +7,6 @@ import { HotelsPage } from './pages/HotelsPage'
 import { TransportPage } from './pages/TransportPage'
 import { SearchPage } from './pages/SearchPage'
 import { PracticalPage } from './pages/PracticalPage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
 
 function Hero() {
   return (
@@ -26,8 +25,8 @@ function Hero() {
         <Link className="secondary" to="/trip?view=calendar">
           📅 Kalender
         </Link>
-        <Link className="secondary" to="/map">
-          🗺️ Kaart
+        <Link className="secondary" to="/trip?view=destinations">
+          🧭 Ontdekken
         </Link>
       </div>
       <a
@@ -55,7 +54,6 @@ function App() {
           <Route path="/transport" element={<TransportPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/practical" element={<PracticalPage />} />
-          <Route path="/map" element={<PlaceholderPage title="Kaart" />} />
         </Routes>
       </main>
       <BottomNav />
