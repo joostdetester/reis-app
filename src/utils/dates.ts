@@ -43,3 +43,20 @@ export function hoursUntil(iso: string, now: Date = new Date()): number | null {
   if (diffMs <= 0) return null
   return Math.ceil(diffMs / 3_600_000)
 }
+
+const dateTimeFormatter = new Intl.DateTimeFormat('nl-NL', {
+  day: '2-digit',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'UTC',
+})
+
+/**
+ * Toont een timestamptz in UTC (niet in de tijdzone van de kijker!). We slaan geen
+ * lokale tijdzone per traject op, dus "20:25 lokale tijd op Schiphol" zou anders
+ * stilzwijgend verkeerd worden weergegeven op een telefoon die al in Manila zit.
+ */
+export function fmtDateTime(iso: string): string {
+  return `${dateTimeFormatter.format(new Date(iso))} UTC`
+}

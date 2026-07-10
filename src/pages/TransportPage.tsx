@@ -1,7 +1,7 @@
 import { useTransportItems } from '../hooks/useTransportItems'
 import { useTripDays } from '../hooks/useTripDays'
 import { FieldRow } from '../components/FieldRow'
-import { fmtDate, hoursUntil } from '../utils/dates'
+import { fmtDate, fmtDateTime, hoursUntil } from '../utils/dates'
 
 export function TransportPage() {
   const { transportItems, loading: loadingItems, error: errorItems } = useTransportItems()
@@ -37,8 +37,22 @@ export function TransportPage() {
               {untilDeparture !== null && untilDeparture <= 24 && (
                 <div className="notice">Vertrekt over {untilDeparture} uur</div>
               )}
+              {(item.origin || item.destination) && (
+                <p className="muted">
+                  {item.origin ?? '-'} → {item.destination ?? '-'}
+                </p>
+              )}
+              {(item.departure_time || item.arrival_time) && (
+                <p className="muted">
+                  {item.departure_time ? fmtDateTime(item.departure_time) : '-'}
+                  {' → '}
+                  {item.arrival_time ? fmtDateTime(item.arrival_time) : '-'}
+                </p>
+              )}
               <FieldRow icon="🔖" label="Boekingsnummer" value={item.booking_reference} table="transport_items" id={item.id} field="booking_reference" />
               <FieldRow icon="🚌" label="Vervoerder" value={item.carrier} table="transport_items" id={item.id} field="carrier" />
+              <FieldRow icon="📍" label="Vertreklocatie" value={item.origin} table="transport_items" id={item.id} field="origin" />
+              <FieldRow icon="📍" label="Aankomstlocatie" value={item.destination} table="transport_items" id={item.id} field="destination" />
               {item.maps_url && (
                 <a target="_blank" rel="noreferrer" href={item.maps_url}>
                   Open route in Google Maps
