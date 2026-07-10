@@ -133,6 +133,17 @@ export function fmtPhilippineTime(iso: string): string {
   return manilaTimeFormatter.format(new Date(iso))
 }
 
+const manilaShortDateFormatter = new Intl.DateTimeFormat('nl-NL', {
+  day: '2-digit',
+  month: '2-digit',
+  timeZone: 'Asia/Manila',
+})
+
+/** Alleen de datum (dd-mm) van een timestamptz, in Filipijnse lokale tijd. Voor verblijfsdata op basis van check_in/check_out. */
+export function fmtPhilippineDate(iso: string): string {
+  return manilaShortDateFormatter.format(new Date(iso))
+}
+
 /** Huidige kloktijd (HH:MM) in een gegeven IANA-tijdzone, voor de live klokjes in de header. */
 export function formatTimeInZone(date: Date, timeZone: string): string {
   return new Intl.DateTimeFormat('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone }).format(date)

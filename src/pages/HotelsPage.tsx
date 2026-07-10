@@ -2,7 +2,7 @@ import { useAccommodations } from '../hooks/useAccommodations'
 import { useTripDayAccommodations } from '../hooks/useTripDayAccommodations'
 import { useTripDays } from '../hooks/useTripDays'
 import { FieldRow } from '../components/FieldRow'
-import { fmtPhilippineTime, shortDate } from '../utils/dates'
+import { fmtPhilippineDate, fmtPhilippineTime, shortDate } from '../utils/dates'
 
 export function HotelsPage() {
   const { accommodations, loading: loadingAcc, error: errorAcc } = useAccommodations()
@@ -40,8 +40,10 @@ export function HotelsPage() {
               <h3>{acc.name}</h3>
               {stayDays.length > 0 && (
                 <div className="muted">
-                  {stayDays[0].location} · Verblijf: {shortDate(stayDays[0].travel_date)} t/m{' '}
-                  {shortDate(stayDays[stayDays.length - 1].travel_date)}
+                  {stayDays[0].location} · Verblijf:{' '}
+                  {acc.check_in && acc.check_out
+                    ? `${fmtPhilippineDate(acc.check_in)} t/m ${fmtPhilippineDate(acc.check_out)}`
+                    : `${shortDate(stayDays[0].travel_date)} t/m ${shortDate(stayDays[stayDays.length - 1].travel_date)}`}
                 </div>
               )}
               {(acc.check_in || acc.check_out) && (
