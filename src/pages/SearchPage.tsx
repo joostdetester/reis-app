@@ -3,6 +3,7 @@ import { useTripDays } from '../hooks/useTripDays'
 import { useAccommodations } from '../hooks/useAccommodations'
 import { useTransportItems } from '../hooks/useTransportItems'
 import { fmtDate } from '../utils/dates'
+import { matchesQuery } from '../utils/search'
 
 type TypeFilter = 'alles' | 'hotel' | 'vervoer' | 'activiteit'
 
@@ -20,21 +21,14 @@ export function SearchPage() {
   const { accommodations } = useAccommodations()
   const { transportItems } = useTransportItems()
 
-  const q = search.toLowerCase()
   const dayById = new Map(days.map((d) => [d.id, d]))
 
   const dayResults =
-    type === 'alles' || type === 'activiteit'
-      ? days.filter((d) => JSON.stringify(d).toLowerCase().includes(q))
-      : []
+    type === 'alles' || type === 'activiteit' ? days.filter((d) => matchesQuery(d, search)) : []
   const hotelResults =
-    type === 'alles' || type === 'hotel'
-      ? accommodations.filter((a) => JSON.stringify(a).toLowerCase().includes(q))
-      : []
+    type === 'alles' || type === 'hotel' ? accommodations.filter((a) => matchesQuery(a, search)) : []
   const transportResults =
-    type === 'alles' || type === 'vervoer'
-      ? transportItems.filter((t) => JSON.stringify(t).toLowerCase().includes(q))
-      : []
+    type === 'alles' || type === 'vervoer' ? transportItems.filter((t) => matchesQuery(t, search)) : []
 
   return (
     <>

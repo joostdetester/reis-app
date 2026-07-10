@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useTripDays } from '../hooks/useTripDays'
 import { DayCard } from '../components/DayCard'
 import { shortDate, todayIndex } from '../utils/dates'
+import { matchesQuery } from '../utils/search'
 import type { TripDay } from '../types/trip'
 
 type TripView = 'timeline' | 'destinations' | 'calendar'
@@ -28,8 +29,7 @@ function Toolbar({ view, onChange }: { view: TripView; onChange: (v: TripView) =
 function TimelineView({ days }: { days: TripDay[] }) {
   const [search, setSearch] = useState('')
   const i = todayIndex(days)
-  const query = search.toLowerCase()
-  const filtered = days.filter((d) => JSON.stringify(d).toLowerCase().includes(query))
+  const filtered = days.filter((d) => matchesQuery(d, search))
 
   return (
     <>
