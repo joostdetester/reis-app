@@ -1,0 +1,131 @@
+// Weer via Open-Meteo (publieke, gratis API zonder key). Coördinaten zijn hardcoded
+// voor de vaste bestemmingen van deze reis — zelfde aanpak als guessTimeZone in dates.ts.
+
+interface Coords {
+  lat: number
+  lon: number
+}
+
+interface KnownLocation {
+  pattern: RegExp
+  label: string
+  coords: Coords
+}
+
+const MANILA: KnownLocation = { pattern: /manila/i, label: 'Manila', coords: { lat: 14.5995, lon: 120.9842 } }
+
+const KNOWN_LOCATIONS: KnownLocation[] = [
+  { pattern: /amsterdam|schiphol/i, label: 'Amsterdam', coords: { lat: 52.3676, lon: 4.9041 } },
+  { pattern: /puerto princesa/i, label: 'Puerto Princesa', coords: { lat: 9.7392, lon: 118.7353 } },
+  { pattern: /el nido/i, label: 'El Nido', coords: { lat: 11.1949, lon: 119.4079 } },
+  { pattern: /cebu city/i, label: 'Cebu City', coords: { lat: 10.3157, lon: 123.8854 } },
+  { pattern: /moalboal/i, label: 'Moalboal', coords: { lat: 9.9435, lon: 123.3944 } },
+  { pattern: /siargao|general luna/i, label: 'Siargao', coords: { lat: 9.8482, lon: 126.1633 } },
+  MANILA,
+]
+
+function guessLocation(locationName: string | null | undefined): KnownLocation {
+  if (locationName) {
+    const match = KNOWN_LOCATIONS.find((l) => l.pattern.test(locationName))
+    if (match) return match
+  }
+  return MANILA
+}
+
+export function guessCoords(locationName: string | null | undefined): Coords {
+  return guessLocation(locationName).coords
+}
+
+/** Schone plaatsnaam waarvoor het weer wordt opgehaald (bv. voor een transferdag "Amsterdam - Muscat" -> "Amsterdam"). */
+export function guessWeatherLabel(locationName: string | null | undefined): string {
+  return guessLocation(locationName).label
+}
+
+interface WeatherCodeInfo {
+  emoji: string
+  label: string
+}
+
+const WEATHER_CODES: Record<number, WeatherCodeInfo> = {
+  0: { emoji: '☀️', label: 'Helder' },
+  1: { emoji: '🌤️', label: 'Overwegend helder' },
+  2: { emoji: '⛅', label: 'Gedeeltelijk bewolkt' },
+  3: { emoji: '☁️', label: 'Bewolkt' },
+  45: { emoji: '🌫️', label: 'Mist' },
+  48: { emoji: '🌫️', label: 'Mist' },
+  51: { emoji: '🌦️', label: 'Lichte motregen' },
+  53: { emoji: '🌦️', label: 'Motregen' },
+  55: { emoji: '🌦️', label: 'Zware motregen' },
+  61: { emoji: '🌧️', label: 'Lichte regen' },
+  63: { emoji: '🌧️', label: 'Regen' },
+  65: { emoji: '🌧️', label: 'Zware regen' },
+  80: { emoji: '🌧️', label: 'Lichte buien' },
+  81: { emoji: '🌧️', label: 'Buien' },
+  82: { emoji: '🌧️', label: 'Hevige buien' },
+  95: { emoji: '⛈️', label: 'Onweer' },
+  96: { emoji: '⛈️', label: 'Onweer met hagel' },
+  99: { emoji: '⛈️', label: 'Zwaar onweer met hagel' },
+}
+
+export function weatherCodeInfo(code: number): WeatherCodeInfo {
+  return WEATHER_CODES[code] ?? { emoji: '🌡️', label: 'Onbekend' }
+}
+
+// Codes die op zichzelf al slecht reisweer betekenen, los van de neerslaghoeveelheid.
+const BAD_TRAVEL_CODES = new Set([65, 67, 82, 95, 96, 99])
+const HEAVY_RAIN_MM = 20
+
+export interface DailyForecast {
+  date: string
+  tempMax: number
+  tempMin: number
+  precipitationSum: number
+  weatherCode: number
+}
+
+export interface CurrentWeather {
+  temp: number
+  precipitation: number
+  weatherCode: number
+}
+
+export interface WeatherData {
+  current: CurrentWeather
+  daily: DailyForecast[]
+}
+
+/** Voor deze dag: is er reden om te waarschuwen voor veel regen of slecht reisweer? */
+export function isBadTravelWeather(day: DailyForecast): boolean {
+  return day.precipitationSum >= HEAVY_RAIN_MM || BAD_TRAVEL_CODES.has(day.weatherCode)
+}
+
+export async function fetchWeather(coords: Coords): Promise<WeatherData> {
+  const params = new URLSearchParams({
+    latitude: String(coords.lat),
+    longitude: String(coords.lon),
+    current: 'temperature_2m,precipitation,weather_code',
+    daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code',
+    timezone: 'auto',
+    forecast_days: '3',
+  })
+  const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`)
+  if (!response.ok) throw new Error('Weerdata kon niet worden opgehaald')
+  const json = await response.json()
+
+  const daily: DailyForecast[] = json.daily.time.map((date: string, i: number) => ({
+    date,
+    tempMax: json.daily.temperature_2m_max[i],
+    tempMin: json.daily.temperature_2m_min[i],
+    precipitationSum: json.daily.precipitation_sum[i],
+    weatherCode: json.daily.weather_code[i],
+  }))
+
+  return {
+    current: {
+      temp: json.current.temperature_2m,
+      precipitation: json.current.precipitation,
+      weatherCode: json.current.weather_code,
+    },
+    daily,
+  }
+}

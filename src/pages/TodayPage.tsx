@@ -1,5 +1,6 @@
 import { Countdown } from '../components/Countdown'
 import { DayCard } from '../components/DayCard'
+import { WeatherCard } from '../components/WeatherCard'
 import { useTripDays } from '../hooks/useTripDays'
 import { useTransportItems } from '../hooks/useTransportItems'
 import { useAccommodations } from '../hooks/useAccommodations'
@@ -23,6 +24,7 @@ export function TodayPage() {
   return (
     <>
       <Countdown />
+      <WeatherCard location={upcoming[0]?.location ?? days[0]?.location} />
       <div className="notice">Tijdens de reis opent de app automatisch op vandaag en morgen.</div>
       {upcoming.map((day) => (
         <DayCard
