@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { TransportItem, TripDay } from '../types/trip'
+import type { DayAccommodationInfo } from '../utils/dayAccommodations'
 import { fmtDate, fmtDateTime } from '../utils/dates'
 import { EditSheet } from './EditSheet'
 import { FieldRow } from './FieldRow'
@@ -17,12 +18,17 @@ const PART_LABELS: Record<PartField, string> = {
 interface DayCardProps {
   day: TripDay
   transportItems?: TransportItem[]
+  accommodationInfo?: DayAccommodationInfo
   collapsed?: boolean
 }
 
 function TransportRow({ item }: { item: TransportItem }) {
   const summary = [item.type, item.carrier, item.booking_reference].filter(Boolean).join(' · ')
   const route = [item.origin, item.destination].filter(Boolean).join(' → ')
+  const times = [item.departure_time, item.arrival_time]
+    .map((t) => (t ? fmtDateTime(t) : null))
+    .filter((t): t is string => Boolean(t))
+    .join(' → ')
 
   return (
     <Link className="row" to="/transport">
@@ -30,10 +36,10 @@ function TransportRow({ item }: { item: TransportItem }) {
       <div>
         <div className="kicker">Vervoer</div>
         <div className="value">{summary || item.type}</div>
-        {(route || item.departure_time) && (
+        {(route || times) && (
           <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
             {route}
-            {item.departure_time ? ` · ${fmtDateTime(item.departure_time)}` : ''}
+            {times ? ` · ${times}` : ''}
           </div>
         )}
       </div>
@@ -42,7 +48,20 @@ function TransportRow({ item }: { item: TransportItem }) {
   )
 }
 
-export function DayCard({ day, transportItems = [], collapsed = false }: DayCardProps) {
+function HotelLine({ info }: { info: DayAccommodationInfo }) {
+  const { accommodation, isCheckIn, isCheckOut } = info
+  const parts = [accommodation.name]
+  if (isCheckIn && accommodation.check_in) parts.push(`inchecken ${fmtDateTime(accommodation.check_in)}`)
+  if (isCheckOut && accommodation.check_out) parts.push(`uitchecken ${fmtDateTime(accommodation.check_out)}`)
+
+  return (
+    <Link className="day-hotel" to="/hotels" onClick={(e) => e.stopPropagation()}>
+      🏨 {parts.join(' · ')}
+    </Link>
+  )
+}
+
+export function DayCard({ day, transportItems = [], accommodationInfo, collapsed = false }: DayCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(collapsed)
   const [editingPart, setEditingPart] = useState<PartField | null>(null)
 
@@ -60,6 +79,7 @@ export function DayCard({ day, transportItems = [], collapsed = false }: DayCard
         <div>
           <div className="day-title">{day.location}</div>
           <div className="day-date">{fmtDate(day.travel_date)}</div>
+          {accommodationInfo && <HotelLine info={accommodationInfo} />}
         </div>
         <span className={`badge ${day.day_type}`}>{day.day_type}</span>
       </div>

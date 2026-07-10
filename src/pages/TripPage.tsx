@@ -2,9 +2,12 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTripDays } from '../hooks/useTripDays'
 import { useTransportItems } from '../hooks/useTransportItems'
+import { useAccommodations } from '../hooks/useAccommodations'
+import { useTripDayAccommodations } from '../hooks/useTripDayAccommodations'
 import { DayCard } from '../components/DayCard'
 import { shortDate, todayIndex } from '../utils/dates'
 import { matchesQuery } from '../utils/search'
+import { buildDayAccommodationMap, type DayAccommodationInfo } from '../utils/dayAccommodations'
 import type { TransportItem, TripDay } from '../types/trip'
 
 type TripView = 'timeline' | 'destinations' | 'calendar'
@@ -27,7 +30,15 @@ function Toolbar({ view, onChange }: { view: TripView; onChange: (v: TripView) =
   )
 }
 
-function TimelineView({ days, transportItems }: { days: TripDay[]; transportItems: TransportItem[] }) {
+function TimelineView({
+  days,
+  transportItems,
+  accommodationByDay,
+}: {
+  days: TripDay[]
+  transportItems: TransportItem[]
+  accommodationByDay: Map<string, DayAccommodationInfo>
+}) {
   const [search, setSearch] = useState('')
   const i = todayIndex(days)
   const filtered = days.filter((d) => matchesQuery(d, search))
@@ -45,6 +56,7 @@ function TimelineView({ days, transportItems }: { days: TripDay[]; transportItem
           key={d.id}
           day={d}
           transportItems={transportItems}
+          accommodationInfo={accommodationByDay.get(d.id)}
           collapsed={d.sort_order !== i && d.sort_order !== i + 1}
         />
       ))}
@@ -100,16 +112,22 @@ function CalendarView({ days }: { days: TripDay[] }) {
 export function TripPage() {
   const { days, loading, error } = useTripDays()
   const { transportItems } = useTransportItems()
+  const { accommodations } = useAccommodations()
+  const { links } = useTripDayAccommodations()
   const [searchParams, setSearchParams] = useSearchParams()
   const view = (searchParams.get('view') as TripView) || 'timeline'
 
   if (loading) return <div className="notice">Laden…</div>
   if (error) return <div className="notice">{error}</div>
 
+  const accommodationByDay = buildDayAccommodationMap(days, links, accommodations)
+
   return (
     <>
       <Toolbar view={view} onChange={(v) => setSearchParams({ view: v })} />
-      {view === 'timeline' && <TimelineView days={days} transportItems={transportItems} />}
+      {view === 'timeline' && (
+        <TimelineView days={days} transportItems={transportItems} accommodationByDay={accommodationByDay} />
+      )}
       {view === 'destinations' && <DestinationsView days={days} />}
       {view === 'calendar' && <CalendarView days={days} />}
     </>
