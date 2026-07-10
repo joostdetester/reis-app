@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { arrivalLocation, beachScore, guessCoords, isBadTravelWeather, weatherCodeInfo, type DailyForecast } from './weather'
+import { arrivalLocation, beachScore, guessCoords, weatherCodeInfo, type DailyForecast } from './weather'
 
 function forecast(overrides: Partial<DailyForecast>): DailyForecast {
   return {
@@ -49,20 +49,6 @@ describe('weatherCodeInfo', () => {
 
   it('valt terug op een neutrale waarde voor onbekende codes', () => {
     expect(weatherCodeInfo(9999).label).toBe('Onbekend')
-  })
-})
-
-describe('isBadTravelWeather', () => {
-  it('waarschuwt bij veel neerslag, ook zonder onweer-code', () => {
-    expect(isBadTravelWeather(forecast({ precipitationSum: 25, weatherCode: 61 }))).toBe(true)
-  })
-
-  it('waarschuwt bij onweer, ook met weinig neerslag', () => {
-    expect(isBadTravelWeather(forecast({ precipitationSum: 1, weatherCode: 95 }))).toBe(true)
-  })
-
-  it('waarschuwt niet bij droog, helder weer', () => {
-    expect(isBadTravelWeather(forecast({ precipitationSum: 0, weatherCode: 1 }))).toBe(false)
   })
 })
 

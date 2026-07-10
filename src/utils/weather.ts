@@ -85,10 +85,6 @@ export function weatherCodeInfo(code: number): WeatherCodeInfo {
   return WEATHER_CODES[code] ?? { emoji: '🌡️', label: 'Onbekend' }
 }
 
-// Codes die op zichzelf al slecht reisweer betekenen, los van de neerslaghoeveelheid.
-const BAD_TRAVEL_CODES = new Set([65, 67, 82, 95, 96, 99])
-const HEAVY_RAIN_MM = 20
-
 export interface DailyForecast {
   date: string
   tempMax: number
@@ -107,11 +103,6 @@ export interface CurrentWeather {
 export interface WeatherData {
   current: CurrentWeather
   daily: DailyForecast[]
-}
-
-/** Voor deze dag: is er reden om te waarschuwen voor veel regen of slecht reisweer? */
-export function isBadTravelWeather(day: DailyForecast): boolean {
-  return day.precipitationSum >= HEAVY_RAIN_MM || BAD_TRAVEL_CODES.has(day.weatherCode)
 }
 
 export interface BeachScore {
