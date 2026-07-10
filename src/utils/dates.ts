@@ -60,3 +60,21 @@ const dateTimeFormatter = new Intl.DateTimeFormat('nl-NL', {
 export function fmtDateTime(iso: string): string {
   return `${dateTimeFormatter.format(new Date(iso))} UTC`
 }
+
+const manilaTimeFormatter = new Intl.DateTimeFormat('nl-NL', {
+  day: '2-digit',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'Asia/Manila',
+})
+
+/** Voor hotel in-/uitchecktijden: één vaste locatie, dus Filipijnse lokale tijd is ondubbelzinnig. */
+export function fmtPhilippineTime(iso: string): string {
+  return manilaTimeFormatter.format(new Date(iso))
+}
+
+/** Huidige kloktijd (HH:MM) in een gegeven IANA-tijdzone, voor de live klokjes in de header. */
+export function formatTimeInZone(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone }).format(date)
+}

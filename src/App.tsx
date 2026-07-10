@@ -1,5 +1,6 @@
 import { HashRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
 import { BottomNav } from './components/BottomNav'
+import { WorldClock } from './components/WorldClock'
 import { TodayPage } from './pages/TodayPage'
 import { TripPage } from './pages/TripPage'
 import { HotelsPage } from './pages/HotelsPage'
@@ -14,6 +15,7 @@ function Hero() {
       <small>Gezinsreis</small>
       <h1>Filipijnen 2026 🇵🇭</h1>
       <p>23 juli – 13 augustus · 22 dagen</p>
+      <WorldClock />
       <div className="top-actions">
         <Link className="secondary" to="/search">
           🔎 Zoeken

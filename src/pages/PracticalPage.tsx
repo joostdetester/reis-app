@@ -1,5 +1,6 @@
 import { usePracticalInfo } from '../hooks/usePracticalInfo'
 import { FieldRow } from '../components/FieldRow'
+import { CurrencyConverter } from '../components/CurrencyConverter'
 
 export function PracticalPage() {
   const { info, loading, error } = usePracticalInfo()
@@ -11,6 +12,7 @@ export function PracticalPage() {
     <>
       <h2 className="section-title">Praktische informatie</h2>
       <div className="grid">
+        <CurrencyConverter />
         {info.map((item) => (
           <div className="list-card" key={item.id}>
             <h3>{item.title}</h3>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { TransportItem, TripDay } from '../types/trip'
 import type { DayAccommodationInfo } from '../utils/dayAccommodations'
-import { fmtDate, fmtDateTime } from '../utils/dates'
+import { fmtDate, fmtDateTime, fmtPhilippineTime } from '../utils/dates'
 import { EditSheet } from './EditSheet'
 import { FieldRow } from './FieldRow'
 import { saveEdit } from '../lib/saveEdit'
@@ -51,8 +51,8 @@ function TransportRow({ item }: { item: TransportItem }) {
 function HotelLine({ info }: { info: DayAccommodationInfo }) {
   const { accommodation, isCheckIn, isCheckOut } = info
   const parts = [accommodation.name]
-  if (isCheckIn && accommodation.check_in) parts.push(`inchecken ${fmtDateTime(accommodation.check_in)}`)
-  if (isCheckOut && accommodation.check_out) parts.push(`uitchecken ${fmtDateTime(accommodation.check_out)}`)
+  if (isCheckIn && accommodation.check_in) parts.push(`inchecken ${fmtPhilippineTime(accommodation.check_in)}`)
+  if (isCheckOut && accommodation.check_out) parts.push(`uitchecken ${fmtPhilippineTime(accommodation.check_out)}`)
 
   return (
     <Link className="day-hotel" to="/hotels" onClick={(e) => e.stopPropagation()}>
