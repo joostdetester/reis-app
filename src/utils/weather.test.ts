@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { beachScore, guessCoords, isBadTravelWeather, weatherCodeInfo, type DailyForecast } from './weather'
+import { arrivalLocation, beachScore, guessCoords, isBadTravelWeather, weatherCodeInfo, type DailyForecast } from './weather'
 
 function forecast(overrides: Partial<DailyForecast>): DailyForecast {
   return {
@@ -22,6 +22,22 @@ describe('guessCoords', () => {
   it('valt terug op Manila voor onbekende of ontbrekende locaties', () => {
     expect(guessCoords('Onbekende plek')).toEqual({ lat: 14.5995, lon: 120.9842 })
     expect(guessCoords(null)).toEqual({ lat: 14.5995, lon: 120.9842 })
+  })
+})
+
+describe('arrivalLocation', () => {
+  it('geeft het laatste deel van een transferdag met liggend streepje', () => {
+    expect(arrivalLocation('Amsterdam - Muscat')).toBe('Muscat')
+    expect(arrivalLocation('Muscat - Manila')).toBe('Manila')
+  })
+
+  it('geeft het laatste deel van een transferdag met pijl', () => {
+    expect(arrivalLocation('Manila → Puerto Princesa')).toBe('Puerto Princesa')
+  })
+
+  it('geeft de locatie ongewijzigd terug zonder scheidingsteken', () => {
+    expect(arrivalLocation('El Nido')).toBe('El Nido')
+    expect(arrivalLocation('Siargao/Surigao')).toBe('Siargao/Surigao')
   })
 })
 

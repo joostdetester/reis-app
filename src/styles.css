@@ -60,7 +60,7 @@ main{max-width:760px;margin:auto;padding:14px 14px 96px}
 .collapsed .day-body{display:none}
 .search{width:100%;border:1px solid var(--line);border-radius:14px;padding:13px 14px;font-size:16px;background:#fff}
 .grid{display:grid;gap:10px}
-.list-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px}
+.list-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;min-width:0}
 .list-card h3{margin:0 0 6px}
 .section-title{margin:18px 2px 8px}
 .bottom-nav{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid var(--line);padding:7px 7px max(7px,env(safe-area-inset-bottom));z-index:20}

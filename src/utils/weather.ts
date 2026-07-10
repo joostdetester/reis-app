@@ -16,6 +16,7 @@ const MANILA: KnownLocation = { pattern: /manila/i, label: 'Manila', coords: { l
 
 const KNOWN_LOCATIONS: KnownLocation[] = [
   { pattern: /amsterdam|schiphol/i, label: 'Amsterdam', coords: { lat: 52.3676, lon: 4.9041 } },
+  { pattern: /muscat/i, label: 'Muscat', coords: { lat: 23.5859, lon: 58.4059 } },
   { pattern: /puerto princesa/i, label: 'Puerto Princesa', coords: { lat: 9.7392, lon: 118.7353 } },
   { pattern: /el nido/i, label: 'El Nido', coords: { lat: 11.1949, lon: 119.4079 } },
   { pattern: /cebu city/i, label: 'Cebu City', coords: { lat: 10.3157, lon: 123.8854 } },
@@ -39,6 +40,16 @@ export function guessCoords(locationName: string | null | undefined): Coords {
 /** Schone plaatsnaam waarvoor het weer wordt opgehaald (bv. voor een transferdag "Amsterdam - Muscat" -> "Amsterdam"). */
 export function guessWeatherLabel(locationName: string | null | undefined): string {
   return guessLocation(locationName).label
+}
+
+/**
+ * Aankomstlocatie van een dag ("Amsterdam - Muscat" of "Manila → Puerto Princesa" -> het
+ * laatste deel), voor het weer van een dag-blok: dat is waar je die dag zult zijn/aankomen.
+ * Zonder scheidingsteken (een gewone verblijfsdag) blijft de locatie ongewijzigd.
+ */
+export function arrivalLocation(locationName: string): string {
+  const parts = locationName.split(/\s*(?:→|-)\s*/).filter(Boolean)
+  return parts[parts.length - 1] ?? locationName
 }
 
 interface WeatherCodeInfo {
@@ -135,14 +146,14 @@ export function beachScore(day: DailyForecast): BeachScore {
   return { score, label }
 }
 
-export async function fetchWeather(coords: Coords): Promise<WeatherData> {
+export async function fetchWeather(coords: Coords, forecastDays = 3): Promise<WeatherData> {
   const params = new URLSearchParams({
     latitude: String(coords.lat),
     longitude: String(coords.lon),
     current: 'temperature_2m,precipitation,weather_code',
     daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,wind_speed_10m_max',
     timezone: 'auto',
-    forecast_days: '3',
+    forecast_days: String(forecastDays),
   })
   const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`)
   if (!response.ok) throw new Error('Weerdata kon niet worden opgehaald')
@@ -164,5 +175,34 @@ export async function fetchWeather(coords: Coords): Promise<WeatherData> {
       weatherCode: json.current.weather_code,
     },
     daily,
+  }
+}
+
+/**
+ * Weer voor één specifieke datum (voor een dag-blok in de tijdlijn). Open-Meteo geeft alleen
+ * betrouwbare voorspellingen tot ~16 dagen vooruit; buiten dat bereik geeft de API een 400 en
+ * geven we `null` terug, zodat de aanroeper dan gewoon niets toont i.p.v. verzonnen data.
+ */
+export async function fetchDailyWeather(coords: Coords, date: string): Promise<DailyForecast | null> {
+  const params = new URLSearchParams({
+    latitude: String(coords.lat),
+    longitude: String(coords.lon),
+    daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,wind_speed_10m_max',
+    timezone: 'auto',
+    start_date: date,
+    end_date: date,
+  })
+  const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`)
+  if (!response.ok) return null
+  const json = await response.json()
+  if (!json.daily?.time?.length) return null
+
+  return {
+    date: json.daily.time[0],
+    tempMax: json.daily.temperature_2m_max[0],
+    tempMin: json.daily.temperature_2m_min[0],
+    precipitationSum: json.daily.precipitation_sum[0],
+    weatherCode: json.daily.weather_code[0],
+    windSpeedMax: json.daily.wind_speed_10m_max[0],
   }
 }

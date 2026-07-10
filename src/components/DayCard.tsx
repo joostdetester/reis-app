@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type { TransportItem, TripDay } from '../types/trip'
 import type { DayAccommodationInfo } from '../utils/dayAccommodations'
 import { fmtDate, formatDurationHM, formatFlightTimes, fmtPhilippineTime } from '../utils/dates'
+import { DayWeather } from './DayWeather'
 import { EditSheet } from './EditSheet'
 import { FieldRow } from './FieldRow'
 import { saveEdit } from '../lib/saveEdit'
@@ -77,6 +78,7 @@ export function DayCard({
         <div>
           <div className="day-title">{day.location}</div>
           <div className="day-date">{fmtDate(day.travel_date)}</div>
+          <DayWeather location={day.location} date={day.travel_date} />
           {accommodationInfo && <HotelLine info={accommodationInfo} />}
           {dayTransport.map((item) => (
             <TransportLine key={item.id} item={item} />

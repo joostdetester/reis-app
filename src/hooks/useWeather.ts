@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchWeather, guessCoords, type WeatherData } from '../utils/weather'
 
-export function useWeather(locationName: string | null | undefined) {
+export function useWeather(locationName: string | null | undefined, forecastDays = 3) {
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -11,7 +11,7 @@ export function useWeather(locationName: string | null | undefined) {
     setLoading(true)
     setError(null)
 
-    fetchWeather(guessCoords(locationName))
+    fetchWeather(guessCoords(locationName), forecastDays)
       .then((data) => {
         if (!cancelled) setWeather(data)
       })
@@ -25,7 +25,7 @@ export function useWeather(locationName: string | null | undefined) {
     return () => {
       cancelled = true
     }
-  }, [locationName])
+  }, [locationName, forecastDays])
 
   return { weather, loading, error }
 }
