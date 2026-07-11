@@ -8,6 +8,8 @@ Alle tabellen hebben een RLS-policy die `select` toestaat voor de anon-rol, zond
 
 `trips.access_token_hash` wordt in de frontend-hooks nooit geselecteerd, ook al staat de kolom achter een publieke leespolicy.
 
+Een link zonder `?token=...` is dus de "alleen-lezen"-link: geschikt om te delen met mensen die het reisplan mogen zien maar niet mogen wijzigen. De UI toont dan nergens een "Bewerk"-knop (zie `src/components/EditButton.tsx`, gebaseerd op `hasEditAccess()` in `src/lib/tripAccess.ts`) en laat een "Alleen-lezen"-badge in de header zien. Dit is puur een UI-gemak — de eigenlijke afdwinging gebeurt hieronder bij "Schrijven", dus zelfs zonder deze UI-check zou een schrijfpoging zonder geldige token al falen.
+
 ## Schrijven
 
 De anon-rol heeft geen `insert`/`update`/`delete`-rechten op enige tabel. Alle wijzigingen lopen via de Supabase Edge Function `save-edit` (`supabase/functions/save-edit/index.ts`):

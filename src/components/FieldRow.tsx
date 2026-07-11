@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { EditButton } from './EditButton'
 import { EditSheet } from './EditSheet'
 import { saveEdit } from '../lib/saveEdit'
 
@@ -28,9 +29,7 @@ export function FieldRow({ icon, label, value, table, id, field, placeholder = '
         <div className="kicker">{label}</div>
         <div className="value">{value || placeholder}</div>
       </div>
-      <button className="edit" onClick={() => setEditing(true)}>
-        Bewerk
-      </button>
+      <EditButton onClick={() => setEditing(true)} />
       {editing && (
         <EditSheet label={label} value={value ?? ''} onCancel={() => setEditing(false)} onSave={handleSave} />
       )}

@@ -27,3 +27,13 @@ export function captureEditTokenFromUrl(): void {
 export function getEditToken(): string | null {
   return sessionStorage.getItem(EDIT_TOKEN_STORAGE_KEY)
 }
+
+/**
+ * Bewerk-modus vs. alleen-lezen: een link zonder `?token=...` geeft alleen leestoegang (voor
+ * mensen die het reisplan mogen zien maar niet mogen wijzigen), een link mét token geeft
+ * bewerktoegang. De backend handhaaft dit al (save-edit weigert zonder geldige token); dit
+ * bepaalt alleen of de UI "Bewerk"-knoppen toont.
+ */
+export function hasEditAccess(): boolean {
+  return getEditToken() !== null
+}

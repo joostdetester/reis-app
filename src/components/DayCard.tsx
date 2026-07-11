@@ -4,6 +4,7 @@ import type { TransportItem, TripDay } from '../types/trip'
 import type { DayAccommodationInfo } from '../utils/dayAccommodations'
 import { fmtDate, formatDurationHM, formatFlightTimes, fmtPhilippineTime } from '../utils/dates'
 import { DayWeather } from './DayWeather'
+import { EditButton } from './EditButton'
 import { EditSheet } from './EditSheet'
 import { FieldRow } from './FieldRow'
 import { saveEdit } from '../lib/saveEdit'
@@ -93,9 +94,7 @@ export function DayCard({
             <div className="part" key={field}>
               <div className="kicker">{PART_LABELS[field]}</div>
               <b>{day[field] ?? 'Nog in te vullen'}</b>
-              <button className="edit" onClick={() => setEditingPart(field)}>
-                Bewerk
-              </button>
+              <EditButton onClick={() => setEditingPart(field)} />
             </div>
           ))}
         </div>

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useTransportItems } from '../hooks/useTransportItems'
 import { useTripDays } from '../hooks/useTripDays'
 import { FieldRow } from '../components/FieldRow'
+import { EditButton } from '../components/EditButton'
 import { EditSheet } from '../components/EditSheet'
 import { saveEdit } from '../lib/saveEdit'
 import { cityLabel, fmtDate, fmtLocalDateTime, formatDuration, hoursUntil } from '../utils/dates'
@@ -61,9 +62,7 @@ function DelayField({ item }: { item: TransportItem }) {
         <div className="kicker">Vertraging</div>
         <div className="value">{item.delay_minutes ? `${item.delay_minutes} minuten` : 'Geen bekende vertraging'}</div>
       </div>
-      <button className="edit" onClick={() => setEditing(true)}>
-        Bewerk
-      </button>
+      <EditButton onClick={() => setEditing(true)} />
       {editing && (
         <EditSheet
           label="Vertraging in minuten"

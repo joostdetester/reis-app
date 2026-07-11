@@ -7,11 +7,12 @@ import { HotelsPage } from './pages/HotelsPage'
 import { TransportPage } from './pages/TransportPage'
 import { SearchPage } from './pages/SearchPage'
 import { PracticalPage } from './pages/PracticalPage'
+import { hasEditAccess } from './lib/tripAccess'
 
 function Hero() {
   return (
     <header className="hero">
-      <small>Gezinsreis</small>
+      <small>Gezinsreis{!hasEditAccess() && <span className="readonly-badge">Alleen-lezen</span>}</small>
       <h1>Filipijnen 2026 🇵🇭</h1>
       <p>23 juli – 13 augustus · 22 dagen</p>
       <WorldClock />
