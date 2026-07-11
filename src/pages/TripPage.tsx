@@ -190,14 +190,48 @@ function BlockFlights({
   )
 }
 
+function BlockAccommodations({
+  block,
+  accommodationByDay,
+}: {
+  block: DestinationBlock
+  accommodationByDay: Map<string, DayAccommodationInfo>
+}) {
+  const seen = new Set<string>()
+  const infos: DayAccommodationInfo[] = []
+  for (const day of block.days) {
+    const info = accommodationByDay.get(day.id)
+    if (info && !seen.has(info.accommodation.id)) {
+      seen.add(info.accommodation.id)
+      infos.push(info)
+    }
+  }
+  if (infos.length === 0) return null
+
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div className="kicker">🏨 Accommodatie{infos.length > 1 ? "'s" : ''}</div>
+      {infos.map(({ accommodation }) => (
+        <div key={accommodation.id} style={{ marginTop: 6 }}>
+          <Link to={`/hotels?item=${accommodation.id}`}>
+            <b>{accommodation.name}</b>
+          </Link>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function DestinationsView({
   days,
   destinations,
   transportItems,
+  accommodationByDay,
 }: {
   days: TripDay[]
   destinations: Destination[]
   transportItems: TransportItem[]
+  accommodationByDay: Map<string, DayAccommodationInfo>
 }) {
   const blocks = buildDestinationBlocks(days)
   const destinationByName = new Map(destinations.map((d) => [d.name, d]))
@@ -242,6 +276,7 @@ function DestinationsView({
               {shortDate(block.days[0].travel_date)} – {shortDate(block.days[block.days.length - 1].travel_date)}
             </div>
             <BlockFlights block={block} totalDays={days.length} transportItems={transportItems} />
+            <BlockAccommodations block={block} accommodationByDay={accommodationByDay} />
             <p>
               <b>Activiteiten:</b> {activities.length > 0 ? activities.join(', ') : '-'}
             </p>
@@ -317,7 +352,12 @@ export function TripPage() {
         />
       )}
       {view === 'destinations' && (
-        <DestinationsView days={days} destinations={destinations} transportItems={transportItems} />
+        <DestinationsView
+          days={days}
+          destinations={destinations}
+          transportItems={transportItems}
+          accommodationByDay={accommodationByDay}
+        />
       )}
       {view === 'calendar' && <CalendarView days={days} />}
     </>
