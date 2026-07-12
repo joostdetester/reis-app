@@ -5,6 +5,7 @@ import { useTransportItems } from '../hooks/useTransportItems'
 import { useAccommodations } from '../hooks/useAccommodations'
 import { useTripDayAccommodations } from '../hooks/useTripDayAccommodations'
 import { useDestinations } from '../hooks/useDestinations'
+import { useTrip } from '../hooks/useTrip'
 import { DayCard } from '../components/DayCard'
 import { cityLabel, fmtLocalDateTime, formatDurationHM, shortDate, todayIndex, tripPhase } from '../utils/dates'
 import { matchesQuery } from '../utils/search'
@@ -71,11 +72,13 @@ function TimelineView({
   transportItems,
   accommodationByDay,
   lastDiveByDayId,
+  photosAlbumUrl,
 }: {
   days: TripDay[]
   transportItems: TransportItem[]
   accommodationByDay: Map<string, DayAccommodationInfo>
   lastDiveByDayId: Map<string, string>
+  photosAlbumUrl?: string | null
 }) {
   const [search, setSearch] = useState('')
   const [searchParams] = useSearchParams()
@@ -113,6 +116,7 @@ function TimelineView({
             collapsed={d.travel_date !== openDate}
             showMapLink={false}
             lastDiveNotice={lastDiveByDayId.get(d.id)}
+            photosAlbumUrl={photosAlbumUrl}
           />
         </div>
       ))}
@@ -285,12 +289,13 @@ function DestinationsView({
             </a>
             {diveShops && diveShops.length > 0 && (
               <div style={{ marginTop: 10 }}>
-                <div className="kicker">🤿 Duikcentra (PADI)</div>
+                <div className="kicker">🤿 Duikcentra (PADI &amp; SSI)</div>
                 {diveShops.map((shop) => (
                   <div key={shop.name} style={{ marginTop: 8 }}>
                     <a href={shop.url} target="_blank" rel="noreferrer">
                       <b>{shop.name}</b>
                     </a>
+                    {shop.certification && <span className={`badge cert-${shop.certification.toLowerCase()}`}>{shop.certification}</span>}
                     {shop.rating != null && (
                       <span className="muted" style={{ fontSize: 12 }}>
                         {' '}
@@ -331,6 +336,7 @@ export function TripPage() {
   const { accommodations } = useAccommodations()
   const { links } = useTripDayAccommodations()
   const { destinations } = useDestinations()
+  const { trip } = useTrip()
   const [searchParams, setSearchParams] = useSearchParams()
   const view = (searchParams.get('view') as TripView) || 'timeline'
 
@@ -349,6 +355,7 @@ export function TripPage() {
           transportItems={transportItems}
           accommodationByDay={accommodationByDay}
           lastDiveByDayId={lastDiveByDayId}
+          photosAlbumUrl={trip?.photos_album_url}
         />
       )}
       {view === 'destinations' && (

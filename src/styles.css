@@ -46,6 +46,8 @@ main{max-width:760px;margin:auto;padding:14px 14px 96px}
 .day-notice{margin-top:6px;font-size:12px;font-weight:800;color:var(--muted)}
 .badge{font-size:11px;font-weight:900;border-radius:999px;padding:6px 9px;height:max-content;background:#dff5ed;color:#167457}
 .badge.reisdag{background:#fff0e8;color:#a54d30}
+.badge.cert-padi,.badge.cert-ssi{padding:2px 8px;margin-left:6px;font-size:10px}
+.badge.cert-ssi{background:#e8ecff;color:#3b4bd6}
 .day-body{padding:4px 16px 16px}
 .row{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:start;padding:10px 0;border-bottom:1px solid #edf2f4;text-decoration:none}
 .row:last-child{border-bottom:0}

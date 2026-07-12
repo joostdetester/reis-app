@@ -81,6 +81,7 @@ export interface DiveShop {
   price_indication: string
   rating?: number
   rating_count?: number
+  certification?: 'PADI' | 'SSI'
 }
 
 export interface Destination {

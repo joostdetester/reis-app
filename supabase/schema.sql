@@ -15,7 +15,11 @@ create table trips (
   start_date date not null,
   end_date date not null,
   access_token_hash text not null,
-  created_at timestamptz not null default now()
+  -- Link naar één gedeeld Google Photos-album voor de hele reis; gezinsleden voegen daar
+  -- zelf foto's/video's aan toe vanuit hun eigen Google-account (geen API-koppeling nodig).
+  photos_album_url text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create table trip_days (

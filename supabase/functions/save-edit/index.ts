@@ -34,6 +34,9 @@ const EDITABLE_COLUMNS: Record<string, string[]> = {
   activities: ['title', 'day_part', 'exact_time', 'status', 'category', 'address', 'maps_url'],
   destinations: ['name', 'summary', 'restaurants', 'practical_tips', 'bad_weather_alternatives', 'dive_shops', 'photo_url'],
   practical_info: ['section', 'title', 'content', 'sort_order'],
+  // trips heeft geen eigen trip_id-kolom (het IS de trip) — zie de scoping-uitzondering hieronder.
+  // access_token_hash, slug e.d. staan hier bewust niet in.
+  trips: ['photos_album_url'],
 }
 
 interface SaveEditRequest {
@@ -123,13 +126,18 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Ongeldige edit-token' }, 401)
   }
 
-  const { data: updated, error: updateError } = await supabaseAdmin
+  // trips is de enige tabel zonder trip_id-kolom (het record IS de trip). Daar negeren we
+  // het meegestuurde id en dwingen we altijd de trip af die al bij slug+token hoort, i.p.v.
+  // op trip_id te scopen.
+  let updateQuery = supabaseAdmin
     .from(table)
     .update({ ...patch, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('trip_id', trip.id)
-    .select()
-    .maybeSingle()
+    .eq('id', table === 'trips' ? trip.id : id)
+  if (table !== 'trips') {
+    updateQuery = updateQuery.eq('trip_id', trip.id)
+  }
+
+  const { data: updated, error: updateError } = await updateQuery.select().maybeSingle()
 
   if (updateError) {
     return jsonResponse({ error: updateError.message }, 500)

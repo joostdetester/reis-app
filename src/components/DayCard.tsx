@@ -24,6 +24,7 @@ interface DayCardProps {
   collapsed?: boolean
   showMapLink?: boolean
   lastDiveNotice?: string
+  photosAlbumUrl?: string | null
 }
 
 function TransportLine({ item }: { item: TransportItem }) {
@@ -61,6 +62,7 @@ export function DayCard({
   collapsed = false,
   showMapLink = true,
   lastDiveNotice,
+  photosAlbumUrl,
 }: DayCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(collapsed)
   const [editingPart, setEditingPart] = useState<PartField | null>(null)
@@ -102,6 +104,12 @@ export function DayCard({
         {showMapLink && (
           <a className="map-link" href={mapsUrl} target="_blank" rel="noreferrer">
             <span>📍 Open locatie in Google Maps</span>
+            <span>›</span>
+          </a>
+        )}
+        {photosAlbumUrl && (
+          <a className="map-link" href={photosAlbumUrl} target="_blank" rel="noreferrer">
+            <span>📷 Foto's &amp; video's van deze reis</span>
             <span>›</span>
           </a>
         )}
