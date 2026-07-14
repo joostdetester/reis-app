@@ -1,8 +1,6 @@
-import { useState } from 'react'
-import { useTrip } from '../hooks/useTrip'
+import { useRef, useState } from 'react'
 import { useTripDays } from '../hooks/useTripDays'
 import { useDayPhotos } from '../hooks/useDayPhotos'
-import { FieldRow } from '../components/FieldRow'
 import { hasEditAccess } from '../lib/tripAccess'
 import { requestGooglePhotosAccessToken } from '../lib/googlePhotosAuth'
 import {
@@ -23,8 +21,8 @@ function dayPhotoUrl(storagePath: string): string {
   return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/day-photos/${storagePath}`
 }
 
-/** Foto met een verwijderknop (alleen met edit-token), met een expliciete bevestigingsstap. */
-function PhotoThumbnail({ photo }: { photo: DayPhoto }) {
+/** Foto met een verwijderknop (alleen met edit-token, met een expliciete bevestigingsstap) en een klik om 'm vergroot te bekijken. */
+function PhotoThumbnail({ photo, onOpen }: { photo: DayPhoto; onOpen: () => void }) {
   const [confirming, setConfirming] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -48,7 +46,7 @@ function PhotoThumbnail({ photo }: { photo: DayPhoto }) {
 
   return (
     <div className="photo-thumb">
-      <img src={dayPhotoUrl(photo.storage_path)} alt="" loading="lazy" />
+      <img src={dayPhotoUrl(photo.storage_path)} alt="" loading="lazy" onClick={onOpen} />
       {hasEditAccess() &&
         (confirming ? (
           <div className="photo-thumb-confirm">
@@ -87,7 +85,15 @@ interface ReadySession {
  * (via GIS, opent zelf een pop-up) en het openen van het keuzescherm (onze eigen
  * pop-up) zijn dus bewust twee aparte knoppen/tikken, elk met hun eigen pop-up.
  */
-function DayPhotosCard({ day, photos }: { day: TripDay; photos: DayPhoto[] }) {
+function DayPhotosCard({
+  day,
+  photos,
+  onOpenPhoto,
+}: {
+  day: TripDay
+  photos: DayPhoto[]
+  onOpenPhoto: (photoId: string) => void
+}) {
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -155,7 +161,7 @@ function DayPhotosCard({ day, photos }: { day: TripDay; photos: DayPhoto[] }) {
       {photos.length > 0 ? (
         <div className="photo-grid">
           {photos.map((photo) => (
-            <PhotoThumbnail key={photo.id} photo={photo} />
+            <PhotoThumbnail key={photo.id} photo={photo} onOpen={() => onOpenPhoto(photo.id)} />
           ))}
         </div>
       ) : (
@@ -184,14 +190,88 @@ function DayPhotosCard({ day, photos }: { day: TripDay; photos: DayPhoto[] }) {
   )
 }
 
+interface LightboxEntry {
+  photo: DayPhoto
+  day: TripDay
+}
+
+const SWIPE_THRESHOLD_PX = 50
+
+/** Vergrote foto met navigatie (swipe + knoppen) door alle foto's van de reis, chronologisch over dagen heen. */
+function Lightbox({
+  entries,
+  index,
+  onClose,
+  onNavigate,
+}: {
+  entries: LightboxEntry[]
+  index: number
+  onClose: () => void
+  onNavigate: (index: number) => void
+}) {
+  const touchStartX = useRef<number | null>(null)
+  const entry = entries[index]
+  if (!entry) return null
+
+  function goPrev() {
+    if (index > 0) onNavigate(index - 1)
+  }
+  function goNext() {
+    if (index < entries.length - 1) onNavigate(index + 1)
+  }
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0]?.clientX ?? null
+  }
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return
+    const delta = (e.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current
+    touchStartX.current = null
+    if (delta > SWIPE_THRESHOLD_PX) goPrev()
+    else if (delta < -SWIPE_THRESHOLD_PX) goNext()
+  }
+
+  return (
+    <div className="lightbox" onClick={onClose}>
+      <div className="lightbox-header" onClick={(e) => e.stopPropagation()}>
+        <div>
+          <div className="lightbox-date">{fmtDate(entry.day.travel_date)}</div>
+          <div className="lightbox-location">{entry.day.location}</div>
+        </div>
+        <button className="lightbox-close" onClick={onClose} aria-label="Sluiten">
+          ×
+        </button>
+      </div>
+      <div
+        className="lightbox-body"
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {index > 0 && (
+          <button className="lightbox-nav lightbox-prev" onClick={goPrev} aria-label="Vorige foto">
+            ‹
+          </button>
+        )}
+        <img src={dayPhotoUrl(entry.photo.storage_path)} alt="" />
+        {index < entries.length - 1 && (
+          <button className="lightbox-nav lightbox-next" onClick={goNext} aria-label="Volgende foto">
+            ›
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function PhotosPage() {
-  const { trip, loading: loadingTrip, error: errorTrip } = useTrip()
   const { days, loading: loadingDays, error: errorDays } = useTripDays()
   const { dayPhotos, loading: loadingPhotos, error: errorPhotos } = useDayPhotos()
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
 
-  const loading = loadingTrip || loadingDays || loadingPhotos
+  const loading = loadingDays || loadingPhotos
   if (loading) return <div className="notice">Laden…</div>
-  const error = errorTrip || errorDays || errorPhotos
+  const error = errorDays || errorPhotos
   if (error) return <div className="notice">{error}</div>
 
   const photosByDay = new Map<string, DayPhoto[]>()
@@ -201,47 +281,30 @@ export function PhotosPage() {
     photosByDay.set(photo.trip_day_id, list)
   }
 
+  // Chronologisch, over dagen heen: dagen staan al op volgorde, foto's per dag ook (zie useDayPhotos).
+  const entries: LightboxEntry[] = []
+  for (const day of days) {
+    for (const photo of photosByDay.get(day.id) ?? []) {
+      entries.push({ photo, day })
+    }
+  }
+
+  function openPhoto(photoId: string) {
+    const index = entries.findIndex((entry) => entry.photo.id === photoId)
+    if (index >= 0) setOpenIndex(index)
+  }
+
   return (
     <>
       <h2 className="section-title">Foto's &amp; video's</h2>
       <div className="grid">
-        {trip && (
-          <div className="list-card">
-            <h3>🔗 Gedeeld album</h3>
-            <p className="muted">
-              Eén gedeeld Google Photos-album voor de hele reis, voor wie liever alles los in
-              Google Photos bekijkt.
-            </p>
-            <FieldRow
-              icon="🔗"
-              label="Albumlink"
-              value={trip.photos_album_url}
-              table="trips"
-              id={trip.id}
-              field="photos_album_url"
-              placeholder="Nog geen album gekoppeld"
-            />
-            {trip.photos_album_url && (
-              <a target="_blank" rel="noreferrer" href={trip.photos_album_url}>
-                Open het reisalbum
-              </a>
-            )}
-          </div>
-        )}
-        {dayPhotos.length > 0 && (
-          <div className="list-card">
-            <h3>🖼️ Alle foto's van de reis</h3>
-            <div className="photo-grid">
-              {dayPhotos.map((photo) => (
-                <PhotoThumbnail key={photo.id} photo={photo} />
-              ))}
-            </div>
-          </div>
-        )}
         {days.map((day) => (
-          <DayPhotosCard key={day.id} day={day} photos={photosByDay.get(day.id) ?? []} />
+          <DayPhotosCard key={day.id} day={day} photos={photosByDay.get(day.id) ?? []} onOpenPhoto={openPhoto} />
         ))}
       </div>
+      {openIndex !== null && (
+        <Lightbox entries={entries} index={openIndex} onClose={() => setOpenIndex(null)} onNavigate={setOpenIndex} />
+      )}
     </>
   )
 }
