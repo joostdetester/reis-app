@@ -19,12 +19,7 @@ function Hero({ onOpenRouteMap }: { onOpenRouteMap: () => void }) {
           Gezinsreis{!hasEditAccess() && <span className="readonly-badge">Alleen-lezen</span>}
         </small>
         <h1>Filipijnen 2026</h1>
-        <p>23 juli – 13 augustus · 22 dagen · een luxe, praktische reisroute met hotels, vervoer en ruimte voor spontane tropische momenten.</p>
-        <div className="hero-meta">
-          <span className="hero-chip">🌴 Tropische reis</span>
-          <span className="hero-chip">🧭 Vandaag & morgen</span>
-          <span className="hero-chip">📍 Hotels & vluchten</span>
-        </div>
+        <p>23 juli – 13 augustus · 22 dagen</p>
         <WorldClock />
         <div className="top-actions">
           <Link className="secondary" to="/trip?view=timeline">
