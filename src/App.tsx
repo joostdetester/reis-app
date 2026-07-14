@@ -11,12 +11,7 @@ import { PhotosPage } from './pages/PhotosPage'
 import { PracticalPage } from './pages/PracticalPage'
 import { clearEditToken, hasEditAccess } from './lib/tripAccess'
 
-function handleLogout() {
-  clearEditToken()
-  window.location.reload()
-}
-
-function Hero({ onOpenRouteMap }: { onOpenRouteMap: () => void }) {
+function Hero({ onOpenRouteMap, onRequestLogout }: { onOpenRouteMap: () => void; onRequestLogout: () => void }) {
   return (
     <header className="hero">
       <div className="hero-content">
@@ -24,7 +19,7 @@ function Hero({ onOpenRouteMap }: { onOpenRouteMap: () => void }) {
           Gezinsreis
           {!hasEditAccess() && <span className="readonly-badge">Alleen-lezen</span>}
           {hasEditAccess() && (
-            <button className="logout-link" onClick={handleLogout}>
+            <button className="logout-link" onClick={onRequestLogout}>
               Uitloggen
             </button>
           )}
@@ -67,10 +62,16 @@ function Hero({ onOpenRouteMap }: { onOpenRouteMap: () => void }) {
 
 function App() {
   const [showRouteMap, setShowRouteMap] = useState(false)
+  const [confirmingLogout, setConfirmingLogout] = useState(false)
+
+  function handleLogout() {
+    clearEditToken()
+    window.location.reload()
+  }
 
   return (
     <HashRouter>
-      <Hero onOpenRouteMap={() => setShowRouteMap(true)} />
+      <Hero onOpenRouteMap={() => setShowRouteMap(true)} onRequestLogout={() => setConfirmingLogout(true)} />
       <main>
         <Routes>
           <Route path="/" element={<Navigate to="/today" replace />} />
@@ -91,6 +92,23 @@ function App() {
             <div className="actions">
               <button className="primary" onClick={() => setShowRouteMap(false)}>
                 Sluiten
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {confirmingLogout && (
+        <div className="overlay" onClick={() => setConfirmingLogout(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <h2>Uitloggen</h2>
+            <div className="notice">
+              Weet je zeker dat je wilt uitloggen? Je hebt daarna de originele geheime link (met
+              ?token=...) weer nodig om opnieuw bewerktoegang te krijgen.
+            </div>
+            <div className="actions">
+              <button onClick={() => setConfirmingLogout(false)}>Annuleren</button>
+              <button className="primary" onClick={handleLogout}>
+                Uitloggen
               </button>
             </div>
           </div>
