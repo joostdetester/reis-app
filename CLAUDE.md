@@ -46,7 +46,7 @@ Extra menu (in de header):
 - Bestemmingen
 - Kalender
 - Reisroute (kaart met de vluchtroute)
-- Foto's & video's
+- Foto's
 - Praktische informatie
 
 Zoeken zit ingebouwd in de tijdlijn op het Reis-tabblad (geen aparte pagina).
@@ -143,20 +143,24 @@ worden uitgezet, om binnen de quota van het gratis API-abonnement te blijven.
 Ingebouwd in de tijdlijn op het Reis-tabblad: typen filtert de dagblokken direct tot
 alleen de treffers, en klapt die blokken meteen allemaal open.
 
-## Foto's & video's
+## Foto's
 
-Aparte pagina (koppeling in de header). Toont:
-
-- de link naar het ene gedeelde Google Photos-album voor de hele reis;
-- per dag van de reis (kopje met dag + locatie) de foto's die voor die dag zijn
-  geïmporteerd, in een fotogrid.
+Aparte pagina (koppeling in de header). Alleen foto's, geen video's (uploaden van
+video's werkt nog niet). Per dag van de reis (kopje met dag + locatie) een fotogrid;
+klikken op een foto toont 'm vergroot, met swipe + pijlknoppen om chronologisch door
+alle foto's van de hele reis te bladeren (over dag-grenzen heen) en dag + locatie
+bovenaan die meeverandert.
 
 Foto's toevoegen kan alleen met edit-token, via "Foto's kiezen uit Google Photos" — dat
 opent Google's eigen kiesscherm (Google Photos Picker API) waarin een gezinslid zelf
-foto's aanwijst uit de eigen Google Photos (inclusief wat anderen in het gedeelde album
-hebben gezet). Gekozen foto's worden verkleind gedownload en opgeslagen in een eigen
+foto's aanwijst uit de eigen Google Photos (inclusief wat anderen in een gedeeld album
+hebben gezet). Gekozen foto's worden verkleind gedownload (altijd als web-veilige JPEG,
+ook als het origineel dat niet is, bv. HEIC vanaf een iPhone) en opgeslagen in een eigen
 Supabase Storage-bucket — geen losse embed van Google Photos zelf (bestaat niet
-betrouwbaar/officieel voor gedeelde albums).
+betrouwbaar/officieel voor gedeelde albums). Eenmaal ingelogd bij Google voor één dag
+geldt dat voor de rest van het paginabezoek voor alle dagen; andere dagen tonen dan
+direct "Open keuzescherm" i.p.v. opnieuw de Google-inlogknop. Elke foto heeft een eigen
+verwijderknop (met bevestigingsstap).
 
 ## Praktische informatie
 

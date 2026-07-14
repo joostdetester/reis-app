@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { captureEditTokenFromUrl, getEditToken, hasEditAccess } from './tripAccess'
+import { captureEditTokenFromUrl, clearEditToken, getEditToken, hasEditAccess } from './tripAccess'
 
 afterEach(() => {
-  sessionStorage.clear()
+  localStorage.clear()
   window.history.replaceState(null, '', '/')
 })
 
@@ -25,5 +25,16 @@ describe('hasEditAccess', () => {
     captureEditTokenFromUrl()
 
     expect(window.location.search).toBe('?day=2026-07-25')
+  })
+
+  it('valt terug naar alleen-lezen na uitloggen', () => {
+    window.history.replaceState(null, '', '/?token=geheim123')
+    captureEditTokenFromUrl()
+    expect(hasEditAccess()).toBe(true)
+
+    clearEditToken()
+
+    expect(getEditToken()).toBeNull()
+    expect(hasEditAccess()).toBe(false)
   })
 })

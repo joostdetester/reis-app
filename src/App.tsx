@@ -9,14 +9,25 @@ import { HotelsPage } from './pages/HotelsPage'
 import { TransportPage } from './pages/TransportPage'
 import { PhotosPage } from './pages/PhotosPage'
 import { PracticalPage } from './pages/PracticalPage'
-import { hasEditAccess } from './lib/tripAccess'
+import { clearEditToken, hasEditAccess } from './lib/tripAccess'
+
+function handleLogout() {
+  clearEditToken()
+  window.location.reload()
+}
 
 function Hero({ onOpenRouteMap }: { onOpenRouteMap: () => void }) {
   return (
     <header className="hero">
       <div className="hero-content">
         <small>
-          Gezinsreis{!hasEditAccess() && <span className="readonly-badge">Alleen-lezen</span>}
+          Gezinsreis
+          {!hasEditAccess() && <span className="readonly-badge">Alleen-lezen</span>}
+          {hasEditAccess() && (
+            <button className="logout-link" onClick={handleLogout}>
+              Uitloggen
+            </button>
+          )}
         </small>
         <h1>Filipijnen 2026</h1>
         <p>23 juli – 13 augustus · 22 dagen</p>
@@ -35,7 +46,7 @@ function Hero({ onOpenRouteMap }: { onOpenRouteMap: () => void }) {
             🗺️ Reisroute
           </button>
           <Link className="secondary" to="/photos">
-            📷 Foto's &amp; video's
+            📷 Foto's
           </Link>
           <Link className="secondary" to="/practical">
             ☰ Praktisch

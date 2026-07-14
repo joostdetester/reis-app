@@ -7,7 +7,8 @@ if (!TRIP_SLUG) {
 }
 
 /**
- * Leest de edit-token uit de geheime link (?token=...), bewaart die in sessionStorage
+ * Leest de edit-token uit de geheime link (?token=...), bewaart die in localStorage (blijft
+ * dus staan na het sluiten van de app/tab — belangrijk voor "Zet op beginscherm" op mobiel)
  * en verwijdert 'm daarna uit de zichtbare URL zodat hij niet in de browserhistorie blijft hangen.
  */
 export function captureEditTokenFromUrl(): void {
@@ -15,7 +16,7 @@ export function captureEditTokenFromUrl(): void {
   const token = params.get('token')
   if (!token) return
 
-  sessionStorage.setItem(EDIT_TOKEN_STORAGE_KEY, token)
+  localStorage.setItem(EDIT_TOKEN_STORAGE_KEY, token)
   params.delete('token')
   const cleanUrl =
     window.location.pathname +
@@ -25,7 +26,7 @@ export function captureEditTokenFromUrl(): void {
 }
 
 export function getEditToken(): string | null {
-  return sessionStorage.getItem(EDIT_TOKEN_STORAGE_KEY)
+  return localStorage.getItem(EDIT_TOKEN_STORAGE_KEY)
 }
 
 /**
@@ -36,4 +37,9 @@ export function getEditToken(): string | null {
  */
 export function hasEditAccess(): boolean {
   return getEditToken() !== null
+}
+
+/** Uitloggen: verwijdert de bewaarde edit-token van dit toestel (terug naar alleen-lezen). */
+export function clearEditToken(): void {
+  localStorage.removeItem(EDIT_TOKEN_STORAGE_KEY)
 }

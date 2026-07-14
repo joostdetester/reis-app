@@ -74,30 +74,31 @@ function PhotoThumbnail({ photo, onOpen }: { photo: DayPhoto; onOpen: () => void
   )
 }
 
-interface ReadySession {
-  accessToken: string
-  session: PickerSession
-}
-
 /**
- * Twee losse tikken i.p.v. één doorlopende actie: mobiele browsers (vooral iOS Safari)
- * staan meestal maar één pop-up per directe gebruikersactie toe. Inloggen bij Google
- * (via GIS, opent zelf een pop-up) en het openen van het keuzescherm (onze eigen
- * pop-up) zijn dus bewust twee aparte knoppen/tikken, elk met hun eigen pop-up.
+ * Zolang er nog geen gedeeld Google-toegangstoken is (deze paginabezoek), zijn het twee
+ * losse tikken: mobiele browsers (vooral iOS Safari) staan meestal maar één pop-up per
+ * directe gebruikersactie toe, en inloggen bij Google (via GIS) opent zelf al een pop-up.
+ * Is er al een gedeeld token (van een andere dag op deze pagina eerder ingelogd), dan is
+ * er nog maar één pop-up nodig (het keuzescherm zelf) — dus dan is het één tik: direct
+ * "Open keuzescherm", dat zelf eerst (zonder pop-up) een nieuwe sessie aanmaakt.
  */
 function DayPhotosCard({
   day,
   photos,
   onOpenPhoto,
+  accessToken,
+  onAccessToken,
 }: {
   day: TripDay
   photos: DayPhoto[]
   onOpenPhoto: (photoId: string) => void
+  accessToken: string | null
+  onAccessToken: (token: string | null) => void
 }) {
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [ready, setReady] = useState<ReadySession | null>(null)
+  const [session, setSession] = useState<PickerSession | null>(null)
 
   async function handlePrepare() {
     if (!GOOGLE_CLIENT_ID) {
@@ -108,10 +109,10 @@ function DayPhotosCard({
     setError(null)
     setStatus('Inloggen bij Google…')
     try {
-      const accessToken = await requestGooglePhotosAccessToken(GOOGLE_CLIENT_ID)
+      const token = await requestGooglePhotosAccessToken(GOOGLE_CLIENT_ID)
+      onAccessToken(token)
       setStatus('Google Photos-sessie voorbereiden…')
-      const session = await createPickerSession(accessToken)
-      setReady({ accessToken, session })
+      setSession(await createPickerSession(token))
       setStatus('Klik op "Open keuzescherm" om foto\'s te kiezen.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Inloggen bij Google is mislukt')
@@ -122,26 +123,45 @@ function DayPhotosCard({
   }
 
   function handleOpenPicker() {
-    if (!ready) return
+    if (!session || !accessToken) return
     // Rechtstreeks in deze klik-handler, dus geen aparte async stap ervoor: dit is de
     // enige pop-up die uit déze tik voortkomt.
-    window.open(ready.session.pickerUri, '_blank', 'noopener,noreferrer')
-    void handleAfterPicking(ready)
+    window.open(session.pickerUri, '_blank', 'noopener,noreferrer')
+    void handleAfterPicking(accessToken, session)
   }
 
-  async function handleAfterPicking({ accessToken, session }: ReadySession) {
+  /** Al ingelogd via een andere dag: sessie aanmaken (geen pop-up) én meteen openen, in één tik. */
+  async function handleQuickOpen() {
+    if (!accessToken) return
+    setBusy(true)
+    setError(null)
+    setStatus('Google Photos-sessie voorbereiden…')
+    try {
+      const newSession = await createPickerSession(accessToken)
+      window.open(newSession.pickerUri, '_blank', 'noopener,noreferrer')
+      void handleAfterPicking(accessToken, newSession)
+    } catch (err) {
+      // Token waarschijnlijk verlopen: terug naar de inlogknop voor de volgende poging.
+      onAccessToken(null)
+      setError(err instanceof Error ? err.message : 'Kon geen Google Photos-sessie starten, log opnieuw in')
+      setStatus(null)
+      setBusy(false)
+    }
+  }
+
+  async function handleAfterPicking(token: string, activeSession: PickerSession) {
     setBusy(true)
     setError(null)
     setStatus("Kies foto's in het geopende tabblad…")
     try {
-      await waitForSelection(session.id, accessToken)
+      await waitForSelection(activeSession.id, token)
 
       setStatus("Foto's ophalen…")
-      const items = (await listSelectedMediaItems(session.id, accessToken)).filter((item) => item.type === 'PHOTO')
+      const items = (await listSelectedMediaItems(activeSession.id, token)).filter((item) => item.type === 'PHOTO')
 
       for (let i = 0; i < items.length; i++) {
         setStatus(`Bezig met uploaden (${i + 1}/${items.length})…`)
-        const { base64, contentType, filename } = await downloadMediaItem(items[i], accessToken)
+        const { base64, contentType, filename } = await downloadMediaItem(items[i], token)
         await uploadDayPhoto(day.id, filename, contentType, base64)
       }
       setStatus(items.length > 0 ? `${items.length} foto's toegevoegd.` : "Geen foto's gekozen.")
@@ -150,7 +170,7 @@ function DayPhotosCard({
       setStatus(null)
     } finally {
       setBusy(false)
-      setReady(null)
+      setSession(null)
     }
   }
 
@@ -169,8 +189,12 @@ function DayPhotosCard({
       )}
       {hasEditAccess() && (
         <>
-          {ready ? (
+          {session ? (
             <button className="chip" onClick={handleOpenPicker} disabled={busy}>
+              ➡️ Open keuzescherm
+            </button>
+          ) : accessToken ? (
+            <button className="chip" onClick={() => void handleQuickOpen()} disabled={busy}>
               ➡️ Open keuzescherm
             </button>
           ) : (
@@ -268,6 +292,9 @@ export function PhotosPage() {
   const { days, loading: loadingDays, error: errorDays } = useTripDays()
   const { dayPhotos, loading: loadingPhotos, error: errorPhotos } = useDayPhotos()
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  // Eén keer inloggen bij Google per paginabezoek: eenmaal ingelogd (via één van de dagen)
+  // tonen alle andere dagen meteen "Open keuzescherm" i.p.v. opnieuw "Foto's kiezen".
+  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null)
 
   const loading = loadingDays || loadingPhotos
   if (loading) return <div className="notice">Laden…</div>
@@ -296,10 +323,17 @@ export function PhotosPage() {
 
   return (
     <>
-      <h2 className="section-title">Foto's &amp; video's</h2>
+      <h2 className="section-title">Foto's</h2>
       <div className="grid">
         {days.map((day) => (
-          <DayPhotosCard key={day.id} day={day} photos={photosByDay.get(day.id) ?? []} onOpenPhoto={openPhoto} />
+          <DayPhotosCard
+            key={day.id}
+            day={day}
+            photos={photosByDay.get(day.id) ?? []}
+            onOpenPhoto={openPhoto}
+            accessToken={googleAccessToken}
+            onAccessToken={setGoogleAccessToken}
+          />
         ))}
       </div>
       {openIndex !== null && (

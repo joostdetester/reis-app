@@ -25,9 +25,9 @@ test.describe('hoofdnavigatie', () => {
   test('extra menu opent fotos en praktische informatie', async ({ page }) => {
     await page.goto('/#/today')
 
-    await page.getByRole('link', { name: /Foto's & video's/ }).click()
+    await page.getByRole('link', { name: /Foto's/ }).click()
     await expect(page).toHaveURL(/#\/photos/)
-    await expect(page.getByText("Foto's & video's", { exact: true }).first()).toBeVisible()
+    await expect(page.getByText("Foto's", { exact: true }).first()).toBeVisible()
 
     await page.getByRole('link', { name: /Praktisch/ }).click()
     await expect(page).toHaveURL(/#\/practical/)

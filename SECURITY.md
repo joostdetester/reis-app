@@ -34,7 +34,8 @@ Twee Edge Functions wijken hiervan af en schrijven zónder edit-tokencheck, met 
 
 - Wordt gegenereerd als willekeurige string; alleen de SHA-256-hash staat in de database (`supabase/seed_trip.sql`).
 - Gezinsleden krijgen de link met `?token=...` erin.
-- Bij eerste bezoek leest `src/lib/tripAccess.ts` de token uit de URL, bewaart 'm in `sessionStorage` en verwijdert 'm meteen uit de zichtbare URL (`history.replaceState`) zodat hij niet in browserhistorie/referrers blijft staan.
+- Bij eerste bezoek leest `src/lib/tripAccess.ts` de token uit de URL, bewaart 'm in `localStorage` (bewust, niet `sessionStorage`: blijft zo staan na het sluiten van de app/tab, belangrijk voor "Zet op beginscherm" op mobiel) en verwijdert 'm meteen uit de zichtbare URL (`history.replaceState`) zodat hij niet in browserhistorie/referrers blijft staan.
+- Uitloggen kan via de knop naast "Gezinsreis" in de header — verwijdert de token uit `localStorage` op dat toestel (`clearEditToken`); de link met `?token=...` moet dan opnieuw geopend worden voor bewerktoegang.
 - Bij verlies of vermoeden van lekken: nieuwe token genereren, hash bijwerken via een `update trips set access_token_hash = ...` in de SQL Editor, nieuwe link versturen.
 
 ## Wat hier bewust niet gebeurt
