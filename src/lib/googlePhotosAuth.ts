@@ -1,12 +1,17 @@
-// Laadt de Google Identity Services-library lui (pas als de foto-import echt gebruikt
-// wordt) en vraagt een tijdelijk OAuth-toegangstoken met alleen de Photos Picker-scope
-// (readonly, en alleen voor de foto's die de gebruiker zelf in de picker aanwijst).
+// Laadt de Google Identity Services-library lui (pas als er echt bij Google wordt
+// ingelogd) en vraagt een tijdelijk OAuth-toegangstoken op.
+
+export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
 
 const SCRIPT_SRC = 'https://accounts.google.com/gsi/client'
-const SCOPE = 'https://www.googleapis.com/auth/photospicker.mediaitems.readonly'
+const PHOTOS_SCOPE = 'https://www.googleapis.com/auth/photospicker.mediaitems.readonly'
+// "email" geeft alleen het geverifieerde e-mailadres (voor de inlogknop op de site,
+// gecombineerd met de Photos-scope zodat dezelfde login ook meteen voor foto's werkt).
+const SITE_LOGIN_SCOPES = `email ${PHOTOS_SCOPE}`
 
 interface TokenResponse {
   access_token?: string
+  expires_in?: number
   error?: string
 }
 
@@ -49,23 +54,37 @@ function loadScript(): Promise<void> {
   return scriptPromise
 }
 
-/** Vraagt de gebruiker om met Google in te loggen en foto-toegang te verlenen; geeft een kort-geldig toegangstoken terug. */
-export async function requestGooglePhotosAccessToken(clientId: string): Promise<string> {
+export interface GoogleAccessToken {
+  accessToken: string
+  expiresInSeconds: number
+}
+
+async function requestAccessToken(clientId: string, scope: string): Promise<GoogleAccessToken> {
   await loadScript()
   if (!window.google) throw new Error('Google-inlogscript kon niet worden geladen')
 
   return new Promise((resolve, reject) => {
     const client = window.google!.accounts.oauth2.initTokenClient({
       client_id: clientId,
-      scope: SCOPE,
+      scope,
       callback: (response) => {
         if (response.error || !response.access_token) {
           reject(new Error(response.error || 'Geen toegangstoken ontvangen van Google'))
           return
         }
-        resolve(response.access_token)
+        resolve({ accessToken: response.access_token, expiresInSeconds: response.expires_in ?? 3600 })
       },
     })
     client.requestAccessToken()
   })
+}
+
+/** Vraagt alleen toegang tot Google Photos (voor de "Foto's kiezen"-knop op de Foto's-pagina). */
+export function requestGooglePhotosAccessToken(clientId: string): Promise<GoogleAccessToken> {
+  return requestAccessToken(clientId, PHOTOS_SCOPE)
+}
+
+/** Vraagt e-mail + Google Photos in één keer (voor de "Inloggen met Google"-knop in de header). */
+export function requestGoogleSiteLoginToken(clientId: string): Promise<GoogleAccessToken> {
+  return requestAccessToken(clientId, SITE_LOGIN_SCOPES)
 }

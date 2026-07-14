@@ -29,6 +29,11 @@ export function getEditToken(): string | null {
   return localStorage.getItem(EDIT_TOKEN_STORAGE_KEY)
 }
 
+/** Zet de edit-token na een geslaagde "Inloggen met Google" (zelfde opslagplek als de geheime link). */
+export function setEditToken(token: string): void {
+  localStorage.setItem(EDIT_TOKEN_STORAGE_KEY, token)
+}
+
 /**
  * Bewerk-modus vs. alleen-lezen: een link zonder `?token=...` geeft alleen leestoegang (voor
  * mensen die het reisplan mogen zien maar niet mogen wijzigen), een link mét token geeft

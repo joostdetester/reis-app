@@ -2,7 +2,11 @@ import { useRef, useState } from 'react'
 import { useTripDays } from '../hooks/useTripDays'
 import { useDayPhotos } from '../hooks/useDayPhotos'
 import { hasEditAccess } from '../lib/tripAccess'
-import { requestGooglePhotosAccessToken } from '../lib/googlePhotosAuth'
+import { GOOGLE_CLIENT_ID, requestGooglePhotosAccessToken } from '../lib/googlePhotosAuth'
+import {
+  getGoogleAccessToken,
+  setGoogleAccessToken as cacheGoogleAccessToken,
+} from '../lib/googleSession'
 import {
   createPickerSession,
   downloadMediaItem,
@@ -14,8 +18,6 @@ import { uploadDayPhoto } from '../lib/uploadDayPhoto'
 import { deleteDayPhoto } from '../lib/deleteDayPhoto'
 import { fmtDate } from '../utils/dates'
 import type { DayPhoto, TripDay } from '../types/trip'
-
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
 
 function dayPhotoUrl(storagePath: string): string {
   return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/day-photos/${storagePath}`
@@ -109,7 +111,8 @@ function DayPhotosCard({
     setError(null)
     setStatus('Inloggen bij Google…')
     try {
-      const token = await requestGooglePhotosAccessToken(GOOGLE_CLIENT_ID)
+      const { accessToken: token, expiresInSeconds } = await requestGooglePhotosAccessToken(GOOGLE_CLIENT_ID)
+      cacheGoogleAccessToken(token, expiresInSeconds)
       onAccessToken(token)
       setStatus('Google Photos-sessie voorbereiden…')
       setSession(await createPickerSession(token))
@@ -292,9 +295,10 @@ export function PhotosPage() {
   const { days, loading: loadingDays, error: errorDays } = useTripDays()
   const { dayPhotos, loading: loadingPhotos, error: errorPhotos } = useDayPhotos()
   const [openIndex, setOpenIndex] = useState<number | null>(null)
-  // Eén keer inloggen bij Google per paginabezoek: eenmaal ingelogd (via één van de dagen)
-  // tonen alle andere dagen meteen "Open keuzescherm" i.p.v. opnieuw "Foto's kiezen".
-  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null)
+  // Eén Google-toegangstoken voor alle dagen én voor "Inloggen met Google" in de header: is er
+  // al een (nog geldig) gedeeld token — bv. via de inlogknop — dan tonen alle dagen meteen
+  // "Open keuzescherm" i.p.v. opnieuw "Foto's kiezen uit Google Photos".
+  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(() => getGoogleAccessToken())
 
   const loading = loadingDays || loadingPhotos
   if (loading) return <div className="notice">Laden…</div>

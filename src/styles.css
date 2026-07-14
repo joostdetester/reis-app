@@ -64,6 +64,8 @@ a{color:inherit}
 .hero-credit{position:absolute;right:14px;bottom:10px;font-size:10px;opacity:.7;text-decoration:none;color:#fff}
 .readonly-badge{margin-left:8px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.22);font-size:10px;letter-spacing:.05em}
 .logout-link{margin-left:8px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.14);border:none;color:inherit;font-size:10px;letter-spacing:.05em;text-decoration:underline}
+.google-login{display:grid;gap:8px}
+.google-login .notice{margin:0;font-size:.82rem;padding:10px 12px}
 .world-clock{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:4px}
 .world-clock > div{padding:11px 12px;border-radius:16px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
 .world-clock .kicker{display:block;color:rgba(255,255,255,.76);margin-bottom:4px;text-transform:uppercase;letter-spacing:.12em;font-size:11px;font-weight:800}

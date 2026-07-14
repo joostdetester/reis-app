@@ -9,9 +9,24 @@ import { HotelsPage } from './pages/HotelsPage'
 import { TransportPage } from './pages/TransportPage'
 import { PhotosPage } from './pages/PhotosPage'
 import { PracticalPage } from './pages/PracticalPage'
-import { clearEditToken, hasEditAccess } from './lib/tripAccess'
+import { clearEditToken, hasEditAccess, setEditToken } from './lib/tripAccess'
+import { GOOGLE_CLIENT_ID, requestGoogleSiteLoginToken } from './lib/googlePhotosAuth'
+import { setGoogleAccessToken as cacheGoogleAccessToken } from './lib/googleSession'
+import { loginWithGoogle } from './lib/loginWithGoogle'
 
-function Hero({ onOpenRouteMap, onRequestLogout }: { onOpenRouteMap: () => void; onRequestLogout: () => void }) {
+function Hero({
+  onOpenRouteMap,
+  onRequestLogout,
+  onGoogleLogin,
+  loggingIn,
+  loginError,
+}: {
+  onOpenRouteMap: () => void
+  onRequestLogout: () => void
+  onGoogleLogin: () => void
+  loggingIn: boolean
+  loginError: string | null
+}) {
   return (
     <header className="hero">
       <div className="hero-content">
@@ -24,6 +39,14 @@ function Hero({ onOpenRouteMap, onRequestLogout }: { onOpenRouteMap: () => void;
             </button>
           )}
         </small>
+        {!hasEditAccess() && (
+          <div className="google-login">
+            <button className="secondary" onClick={onGoogleLogin} disabled={loggingIn}>
+              {loggingIn ? 'Bezig met inloggen…' : '🔐 Inloggen met Google'}
+            </button>
+            {loginError && <div className="notice">{loginError}</div>}
+          </div>
+        )}
         <h1>Filipijnen 2026</h1>
         <p>23 juli – 13 augustus · 22 dagen</p>
         <WorldClock />
@@ -63,15 +86,43 @@ function Hero({ onOpenRouteMap, onRequestLogout }: { onOpenRouteMap: () => void;
 function App() {
   const [showRouteMap, setShowRouteMap] = useState(false)
   const [confirmingLogout, setConfirmingLogout] = useState(false)
+  const [loggingIn, setLoggingIn] = useState(false)
+  const [loginError, setLoginError] = useState<string | null>(null)
 
   function handleLogout() {
     clearEditToken()
     window.location.reload()
   }
 
+  async function handleGoogleLogin() {
+    if (!GOOGLE_CLIENT_ID) {
+      setLoginError('Inloggen met Google is nog niet geconfigureerd (ontbrekende Google-client-ID).')
+      return
+    }
+    setLoggingIn(true)
+    setLoginError(null)
+    try {
+      const { accessToken, expiresInSeconds } = await requestGoogleSiteLoginToken(GOOGLE_CLIENT_ID)
+      const editToken = await loginWithGoogle(accessToken)
+      setEditToken(editToken)
+      // Meteen ook klaar voor de Foto's-pagina: geen tweede Google-login meer nodig.
+      cacheGoogleAccessToken(accessToken, expiresInSeconds)
+      window.location.reload()
+    } catch (err) {
+      setLoginError(err instanceof Error ? err.message : 'Inloggen met Google is mislukt')
+      setLoggingIn(false)
+    }
+  }
+
   return (
     <HashRouter>
-      <Hero onOpenRouteMap={() => setShowRouteMap(true)} onRequestLogout={() => setConfirmingLogout(true)} />
+      <Hero
+        onOpenRouteMap={() => setShowRouteMap(true)}
+        onRequestLogout={() => setConfirmingLogout(true)}
+        onGoogleLogin={() => void handleGoogleLogin()}
+        loggingIn={loggingIn}
+        loginError={loginError}
+      />
       <main>
         <Routes>
           <Route path="/" element={<Navigate to="/today" replace />} />

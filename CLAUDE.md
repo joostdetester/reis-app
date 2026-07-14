@@ -193,6 +193,13 @@ Per bestemming tonen:
 - Alleen actuele informatie tonen.
 - Wijzigingen moeten via Supabase realtime synchroniseren.
 
+Bewerktoegang krijgen kan op twee manieren: de geheime link met `?token=...` openen, of in
+de header op "Inloggen met Google" klikken en inloggen met een vooraf afgesproken
+gezinsaccount (server-side geverifieerd tegen een vaste lijst toegestane e-mailadressen).
+Beide geven dezelfde edit-token; zie `SECURITY.md` voor de technische details. Uitloggen
+(knop naast "Gezinsreis" in de header) vraagt eerst bevestiging, met een toelichting dat
+daarna opnieuw de link of "Inloggen met Google" nodig is.
+
 ## Techniek
 
 Voorkeur voor:

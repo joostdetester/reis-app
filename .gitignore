@@ -15,3 +15,5 @@ Thumbs.db
 .vercel
 .env*
 supabase/.temp
+.playwright-cli/
+linear-design/
