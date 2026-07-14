@@ -8,10 +8,11 @@ export interface Trip {
   start_date: string
   end_date: string
   photos_album_url: string | null
+  flight_status_api_enabled: boolean
 }
 
 // access_token_hash wordt hier bewust nooit geselecteerd (zie SECURITY.md).
-const TRIP_COLUMNS = 'id, name, start_date, end_date, photos_album_url'
+const TRIP_COLUMNS = 'id, name, start_date, end_date, photos_album_url, flight_status_api_enabled'
 
 /** De ene trip-rij zelf (naam, data, gedeeld foto-album-link). Geen trip_id-kolom hier — filtert op eigen id. */
 export function useTrip() {

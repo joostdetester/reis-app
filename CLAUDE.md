@@ -118,16 +118,21 @@ Aparte pagina, uitsluitend vluchten (ander vervoer zoals boot, scooter, taxi of 
 staat alleen in de dagweergave, niet op deze pagina). Per vlucht tonen:
 
 - datum;
-- traject;
+- vluchtmaatschappij en type vlucht, met een link naar de route op Google Maps;
+- vluchtnummer;
+- vertrek- en aankomstlocatie, met de locatienaam zelf als link naar Google Maps;
 - vertrek- en aankomsttijd, bewerkbaar; bij wijziging een waarschuwing tonen dat de
   vluchttijden zijn aangepast;
-- vervoerder;
-- vluchtnummer;
-- vertrek- en aankomstlocatie;
-- vertrekhal, gate en aankomstterminal, bewerkbaar zodra bekend;
-- routeknop.
+- vluchtduur;
+- vertrekhal, gate en aankomstterminal: automatisch overgenomen vanaf 2 uur voor
+  vertrek resp. aankomst (daarvoor "Nog niet beschikbaar"), en bewerkbaar zodra bekend;
+- vluchtstatus: actuele status (op tijd/vertraagd/geannuleerd/geland/...), automatisch
+  opgehaald vanaf 48 uur voor vertrek tot 24 uur na aankomst.
 
 Vanaf 24 uur voor vertrek een afteller tonen.
+
+De vluchtstatus-API kan met een schakelaar (alleen zichtbaar met edit-token) helemaal
+worden uitgezet, om binnen de quota van het gratis API-abonnement te blijven.
 
 ## Zoeken en filteren
 

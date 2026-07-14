@@ -18,6 +18,8 @@ create table trips (
   -- Link naar één gedeeld Google Photos-album voor de hele reis; gezinsleden voegen daar
   -- zelf foto's/video's aan toe vanuit hun eigen Google-account (geen API-koppeling nodig).
   photos_album_url text,
+  -- Schakelaar voor de vluchtstatus-API (AeroDataBox), om binnen de gratis quota te blijven.
+  flight_status_api_enabled boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

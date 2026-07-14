@@ -37,7 +37,7 @@ const EDITABLE_COLUMNS: Record<string, string[]> = {
   practical_info: ['section', 'title', 'content', 'sort_order'],
   // trips heeft geen eigen trip_id-kolom (het IS de trip) — zie de scoping-uitzondering hieronder.
   // access_token_hash, slug e.d. staan hier bewust niet in.
-  trips: ['photos_album_url'],
+  trips: ['photos_album_url', 'flight_status_api_enabled'],
 }
 
 interface SaveEditRequest {

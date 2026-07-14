@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   countdownTo,
+  flightStatusWindow,
   fmtDate,
   fromDatetimeLocalValue,
   hoursUntil,
+  isoDateInZone,
   shortDate,
   todayIndex,
   todayIso,
@@ -72,6 +74,47 @@ describe('hoursUntil', () => {
 
   it('geeft null als het tijdstip al voorbij is', () => {
     expect(hoursUntil('2026-07-23T20:00:00', new Date('2026-07-23T21:00:00'))).toBeNull()
+  })
+})
+
+describe('flightStatusWindow', () => {
+  const departure = '2026-07-23T20:00:00Z'
+  const arrival = '2026-07-24T04:00:00Z'
+
+  it('is "before" ruim vóór het venster (>48u voor vertrek)', () => {
+    expect(flightStatusWindow(departure, arrival, new Date('2026-07-20T20:00:00Z'))).toBe('before')
+  })
+
+  it('is "active" op de grens van 48u voor vertrek', () => {
+    expect(flightStatusWindow(departure, arrival, new Date('2026-07-21T20:00:01Z'))).toBe('active')
+  })
+
+  it('is "active" tijdens de vlucht', () => {
+    expect(flightStatusWindow(departure, arrival, new Date('2026-07-24T00:00:00Z'))).toBe('active')
+  })
+
+  it('is "active" kort na aankomst', () => {
+    expect(flightStatusWindow(departure, arrival, new Date('2026-07-24T10:00:00Z'))).toBe('active')
+  })
+
+  it('is "after" ruim na aankomst (>24u)', () => {
+    expect(flightStatusWindow(departure, arrival, new Date('2026-07-26T00:00:00Z'))).toBe('after')
+  })
+
+  it('valt zonder aankomsttijd terug op vertrektijd als referentiepunt', () => {
+    expect(flightStatusWindow(departure, null, new Date('2026-07-24T21:00:00Z'))).toBe('after')
+  })
+})
+
+describe('isoDateInZone', () => {
+  it('geeft de lokale datum in Asia/Manila, ook als de UTC-datum al een dag verder is', () => {
+    // 2026-07-25T01:50Z is al 09:50 lokale tijd in Manila (UTC+8), zelfde kalenderdag hier.
+    expect(isoDateInZone('2026-07-25T01:50:00Z', 'Asia/Manila')).toBe('2026-07-25')
+  })
+
+  it('geeft de vorige lokale datum als UTC net over middernacht lokale tijd heen is', () => {
+    // 2026-07-23T23:30Z is pas 00:30 lokale tijd in Amsterdam (UTC+2) op de vólgende dag.
+    expect(isoDateInZone('2026-07-23T23:30:00Z', 'Europe/Amsterdam')).toBe('2026-07-24')
   })
 })
 

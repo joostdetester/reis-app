@@ -2,22 +2,25 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTransportItems } from '../hooks/useTransportItems'
 import { useTripDays } from '../hooks/useTripDays'
+import { useTrip, type Trip } from '../hooks/useTrip'
+import { useFlightStatus } from '../hooks/useFlightStatus'
 import { FieldRow } from '../components/FieldRow'
 import { EditButton } from '../components/EditButton'
-import { EditSheet } from '../components/EditSheet'
 import { saveEdit } from '../lib/saveEdit'
 import { hasEditAccess } from '../lib/tripAccess'
 import {
   cityLabel,
+  flightStatusWindow,
   fmtDate,
   fmtLocalDateTime,
   formatDuration,
   fromDatetimeLocalValue,
   guessTimeZone,
   hoursUntil,
+  isoDateInZone,
   toDatetimeLocalValue,
 } from '../utils/dates'
-import { flightMapUrl, flightStatusUrl, splitFlightNumbers } from '../utils/maps'
+import { flightMapUrl, splitFlightNumbers } from '../utils/maps'
 import { isFlight } from '../utils/transport'
 import type { TransportItem } from '../types/trip'
 
@@ -154,39 +157,93 @@ function ScheduleChangedNotice({ item }: { item: TransportItem }) {
   )
 }
 
-function DelayField({ item }: { item: TransportItem }) {
-  const [editing, setEditing] = useState(false)
+// Alleen live opvragen dicht bij de vlucht: ver vooruit heeft een statusopvraag geen zin
+// (nog niets bekend) en lang na aankomst verandert er toch niets meer — beide zijn
+// verspilde quota bij de vluchtstatus-API (gratis abonnement, beperkt aantal calls/maand).
+const STATUS_LOOKUP_BEFORE_HOURS = 48
+const STATUS_LOOKUP_AFTER_HOURS = 24
 
-  async function handleSave(value: string) {
-    const trimmed = value.trim()
-    const minutes = trimmed === '' ? null : parseInt(trimmed, 10)
-    await saveEdit('transport_items', item.id, { delay_minutes: Number.isFinite(minutes) ? minutes : null })
-    setEditing(false)
+// Vertrekhal/gate/aankomstterminal zijn vaak sowieso pas dicht bij de vlucht bekend
+// (ongeacht databron) — moet gelijk zijn aan GATE_LOOKUP_WINDOW_HOURS in de edge function.
+const GATE_LOOKUP_WINDOW_HOURS = 2
+
+/** "-" als het venster al bereikt is (of er al een waarde staat); anders een duidelijke reden waarom niet. */
+function gatePlaceholder(targetIso: string | null, relativeTo: 'vertrek' | 'aankomst'): string {
+  if (!targetIso) return '-'
+  const remaining = hoursUntil(targetIso)
+  if (remaining !== null && remaining > GATE_LOOKUP_WINDOW_HOURS) {
+    return `Nog niet beschikbaar (pas vanaf ${GATE_LOOKUP_WINDOW_HOURS} uur voor ${relativeTo})`
   }
+  return '-'
+}
+
+function FlightStatusField({ item, apiEnabled }: { item: TransportItem; apiEnabled: boolean }) {
+  const codes = item.booking_reference ? splitFlightNumbers(item.booking_reference) : []
+  const zone = guessTimeZone(item.origin)
+  const date = item.departure_time ? isoDateInZone(item.departure_time, zone) : ''
+  const windowState = item.departure_time
+    ? flightStatusWindow(item.departure_time, item.arrival_time, new Date(), STATUS_LOOKUP_BEFORE_HOURS, STATUS_LOOKUP_AFTER_HOURS)
+    : 'before'
+  const enabled = apiEnabled && windowState === 'active' && codes.length > 0 && Boolean(date)
+
+  const { results, loading, error } = useFlightStatus({
+    transportItemId: item.id,
+    flightNumbers: codes,
+    date,
+    currentDepartureIso: item.departure_time,
+    currentArrivalIso: item.arrival_time,
+    enabled,
+  })
+
+  const value = !apiEnabled
+    ? 'Vluchtstatus-API staat uit'
+    : windowState === 'before'
+      ? `Nog niet beschikbaar (pas vanaf ${STATUS_LOOKUP_BEFORE_HOURS} uur voor vertrek)`
+      : windowState === 'after'
+        ? '-'
+        : loading
+          ? 'Bezig met ophalen…'
+          : error
+            ? error
+            : results
+              ? results.map((r) => `${r.flightNumber}: ${r.status}${r.delayMinutes ? ` (${r.delayMinutes} min)` : ''}`).join(' · ')
+              : '-'
 
   return (
     <div className="row">
-      <div>⏱️</div>
+      <div>📡</div>
       <div>
-        <div className="kicker">Vertraging</div>
-        <div className="value">{item.delay_minutes ? `${item.delay_minutes} minuten` : 'Geen bekende vertraging'}</div>
+        <div className="kicker">Vluchtstatus</div>
+        <div className="value">{value}</div>
       </div>
-      <EditButton onClick={() => setEditing(true)} />
-      {editing && (
-        <EditSheet
-          label="Vertraging in minuten"
-          value={item.delay_minutes != null ? String(item.delay_minutes) : ''}
-          onCancel={() => setEditing(false)}
-          onSave={handleSave}
-        />
-      )}
     </div>
+  )
+}
+
+/** Schakelaar (alleen zichtbaar met edit-token) om de vluchtstatus-API helemaal uit te zetten en zo quota te sparen. */
+function FlightApiToggle({ trip }: { trip: Trip }) {
+  const [saving, setSaving] = useState(false)
+
+  async function toggle() {
+    setSaving(true)
+    try {
+      await saveEdit('trips', trip.id, { flight_status_api_enabled: !trip.flight_status_api_enabled })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <button className="chip" onClick={() => void toggle()} disabled={saving}>
+      📡 Vluchtstatus-API: {trip.flight_status_api_enabled ? 'Aan' : 'Uit'}
+    </button>
   )
 }
 
 export function TransportPage() {
   const { transportItems, loading: loadingItems, error: errorItems } = useTransportItems()
   const { days, loading: loadingDays, error: errorDays } = useTripDays()
+  const { trip } = useTrip()
   const [searchParams] = useSearchParams()
   const targetId = searchParams.get('item')
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
@@ -208,10 +265,14 @@ export function TransportPage() {
     const dayB = dayById.get(b.trip_day_id)?.sort_order ?? 0
     return dayA - dayB
   })
+  const apiEnabled = trip?.flight_status_api_enabled ?? true
 
   return (
     <>
-      <h2 className="section-title">Vluchten</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+        <h2 className="section-title">Vluchten</h2>
+        {hasEditAccess() && trip && <FlightApiToggle trip={trip} />}
+      </div>
       <div className="grid">
         {sorted.map((item) => {
           const day = dayById.get(item.trip_day_id)
@@ -228,44 +289,40 @@ export function TransportPage() {
               <p>
                 <b>{item.type}</b>
                 {item.carrier ? ` · ${item.carrier}` : ''}
+                {flightMapUrl(item.origin, item.destination) && (
+                  <>
+                    {' '}
+                    (
+                    <a target="_blank" rel="noreferrer" href={flightMapUrl(item.origin, item.destination)!}>
+                      route
+                    </a>
+                    )
+                  </>
+                )}
               </p>
               <ScheduleChangedNotice item={item} />
               {untilDeparture !== null && untilDeparture <= 24 && (
                 <div className="notice">Vertrekt over {untilDeparture} uur</div>
               )}
-              {Boolean(item.delay_minutes) && (
-                <div className="notice">⚠️ Vertraging: {item.delay_minutes} minuten</div>
-              )}
-              {(item.origin || item.destination) && (
-                <p className="muted">
-                  {item.origin ?? '-'} → {item.destination ?? '-'}
-                </p>
-              )}
-              {flightMapUrl(item.origin, item.destination) && (
-                <a target="_blank" rel="noreferrer" href={flightMapUrl(item.origin, item.destination)!}>
-                  🗺️ Bekijk route op kaart
-                </a>
-              )}
               <FieldRow icon="🔖" label="Vluchtnummer" value={item.booking_reference} table="transport_items" id={item.id} field="booking_reference" />
-              {item.booking_reference &&
-                splitFlightNumbers(item.booking_reference).map((code) => (
-                  <a key={code} target="_blank" rel="noreferrer" href={flightStatusUrl(code)}>
-                    ✈️ Vluchtstatus {code} opzoeken
-                  </a>
-                ))}
-              <FieldRow icon="🚌" label="Vervoerder" value={item.carrier} table="transport_items" id={item.id} field="carrier" />
-              <FieldRow icon="📍" label="Vertreklocatie" value={item.origin} table="transport_items" id={item.id} field="origin" />
-              {item.origin && (
-                <a target="_blank" rel="noreferrer" href={mapsSearchUrl(item.origin)}>
-                  Vertreklocatie op Google Maps
-                </a>
-              )}
-              <FieldRow icon="📍" label="Aankomstlocatie" value={item.destination} table="transport_items" id={item.id} field="destination" />
-              {item.destination && (
-                <a target="_blank" rel="noreferrer" href={mapsSearchUrl(item.destination)}>
-                  Aankomstlocatie op Google Maps
-                </a>
-              )}
+              <FieldRow
+                icon="📍"
+                label="Vertreklocatie"
+                value={item.origin}
+                table="transport_items"
+                id={item.id}
+                field="origin"
+                href={item.origin ? mapsSearchUrl(item.origin) : undefined}
+              />
+              <FieldRow
+                icon="📍"
+                label="Aankomstlocatie"
+                value={item.destination}
+                table="transport_items"
+                id={item.id}
+                field="destination"
+                href={item.destination ? mapsSearchUrl(item.destination) : undefined}
+              />
               <FlightTimeField
                 item={item}
                 field="departure_time"
@@ -291,10 +348,34 @@ export function TransportPage() {
                   </div>
                 </div>
               )}
-              <FieldRow icon="🚪" label="Vertrekhal" value={item.departure_terminal} table="transport_items" id={item.id} field="departure_terminal" />
-              <FieldRow icon="🎫" label="Gate" value={item.departure_gate} table="transport_items" id={item.id} field="departure_gate" />
-              <FieldRow icon="🚪" label="Aankomstterminal" value={item.arrival_terminal} table="transport_items" id={item.id} field="arrival_terminal" />
-              <DelayField item={item} />
+              <FieldRow
+                icon="🚪"
+                label="Vertrekhal"
+                value={item.departure_terminal}
+                table="transport_items"
+                id={item.id}
+                field="departure_terminal"
+                placeholder={gatePlaceholder(item.departure_time, 'vertrek')}
+              />
+              <FieldRow
+                icon="🎫"
+                label="Gate"
+                value={item.departure_gate}
+                table="transport_items"
+                id={item.id}
+                field="departure_gate"
+                placeholder={gatePlaceholder(item.departure_time, 'vertrek')}
+              />
+              <FieldRow
+                icon="🚪"
+                label="Aankomstterminal"
+                value={item.arrival_terminal}
+                table="transport_items"
+                id={item.id}
+                field="arrival_terminal"
+                placeholder={gatePlaceholder(item.arrival_time, 'aankomst')}
+              />
+              <FlightStatusField item={item} apiEnabled={apiEnabled} />
               {item.maps_url && (
                 <a target="_blank" rel="noreferrer" href={item.maps_url}>
                   Open route in Google Maps

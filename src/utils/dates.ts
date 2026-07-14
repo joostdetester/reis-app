@@ -44,6 +44,28 @@ export function hoursUntil(iso: string, now: Date = new Date()): number | null {
   return Math.ceil(diffMs / 3_600_000)
 }
 
+export type FlightStatusWindow = 'before' | 'active' | 'after'
+
+/**
+ * Venster waarin het zin heeft de vluchtstatus-API te bevragen: vanaf `beforeHours` uur
+ * vóór vertrek tot `afterHours` uur na aankomst. Ver vooruit is er nog niets bekend, en
+ * lang na aankomst blijft het resultaat toch hetzelfde — beide zijn dus verspilde quota.
+ */
+export function flightStatusWindow(
+  departureIso: string,
+  arrivalIso: string | null,
+  now: Date = new Date(),
+  beforeHours = 48,
+  afterHours = 24,
+): FlightStatusWindow {
+  const departure = new Date(departureIso).getTime()
+  const reference = arrivalIso ? new Date(arrivalIso).getTime() : departure
+  const nowMs = now.getTime()
+  if (nowMs < departure - beforeHours * 3_600_000) return 'before'
+  if (nowMs > reference + afterHours * 3_600_000) return 'after'
+  return 'active'
+}
+
 // We slaan geen tijdzone per traject op, dus deze herkent een handjevol vaste
 // namen uit dit specifieke reisschema. Alles wat niet matcht valt terug op
 // Asia/Manila — correct voor vrijwel elke binnenlandse Filipijnse locatie.
@@ -59,6 +81,16 @@ export function guessTimeZone(locationName: string | null | undefined): string {
     }
   }
   return 'Asia/Manila'
+}
+
+/** Datum (YYYY-MM-DD) van een timestamptz in een gegeven tijdzone. Voor het opzoeken van een vlucht op de juiste lokale vertrekdatum. */
+export function isoDateInZone(iso: string, timeZone: string): string {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
+      .formatToParts(new Date(iso))
+      .map((p) => [p.type, p.value]),
+  )
+  return `${parts.year}-${parts.month}-${parts.day}`
 }
 
 /** Toont een timestamptz in de lokale tijd van `locationName` (zie guessTimeZone). */
