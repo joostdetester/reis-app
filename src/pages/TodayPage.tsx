@@ -4,7 +4,6 @@ import { useTripDays } from '../hooks/useTripDays'
 import { useTransportItems } from '../hooks/useTransportItems'
 import { useAccommodations } from '../hooks/useAccommodations'
 import { useTripDayAccommodations } from '../hooks/useTripDayAccommodations'
-import { useTrip } from '../hooks/useTrip'
 import { buildDayAccommodationMap } from '../utils/dayAccommodations'
 import { todayIndex } from '../utils/dates'
 
@@ -13,7 +12,6 @@ export function TodayPage() {
   const { transportItems } = useTransportItems()
   const { accommodations } = useAccommodations()
   const { links } = useTripDayAccommodations()
-  const { trip } = useTrip()
 
   if (loading) return <div className="notice">Laden…</div>
   if (error) return <div className="notice">{error}</div>
@@ -34,7 +32,6 @@ export function TodayPage() {
           day={day}
           transportItems={transportItems}
           accommodationInfo={accommodationByDay.get(day.id)}
-          photosAlbumUrl={trip?.photos_album_url}
         />
       ))}
     </>

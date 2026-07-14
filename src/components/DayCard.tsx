@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { TransportItem, TripDay } from '../types/trip'
 import type { DayAccommodationInfo } from '../utils/dayAccommodations'
@@ -25,7 +25,6 @@ interface DayCardProps {
   collapsed?: boolean
   showMapLink?: boolean
   lastDiveNotice?: string
-  photosAlbumUrl?: string | null
 }
 
 function TransportLine({ item }: { item: TransportItem }) {
@@ -69,10 +68,15 @@ export function DayCard({
   collapsed = false,
   showMapLink = true,
   lastDiveNotice,
-  photosAlbumUrl,
 }: DayCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(collapsed)
   const [editingPart, setEditingPart] = useState<PartField | null>(null)
+
+  // `collapsed` bepaalt hier niet alleen de startstand: als de tijdlijn bv. door een
+  // zoekopdracht alle kaarten openklapt, moet een al gemonteerde kaart daar wel op reageren.
+  useEffect(() => {
+    setIsCollapsed(collapsed)
+  }, [collapsed])
 
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.location + ' Philippines')}`
   const dayTransport = transportItems.filter((t) => t.trip_day_id === day.id)
@@ -123,12 +127,6 @@ export function DayCard({
         {showMapLink && (
           <a className="map-link" href={mapsUrl} target="_blank" rel="noreferrer">
             <span>📍 Open locatie in Google Maps</span>
-            <span>›</span>
-          </a>
-        )}
-        {photosAlbumUrl && (
-          <a className="map-link" href={photosAlbumUrl} target="_blank" rel="noreferrer">
-            <span>📷 Foto's &amp; video's van deze reis</span>
             <span>›</span>
           </a>
         )}

@@ -19,6 +19,17 @@ De anon-rol heeft geen `insert`/`update`/`delete`-rechten op enige tabel. Alle w
 3. Bij een geldige token voert de functie de update uit met de service-role key — die alleen in de Edge Function-omgeving leeft en nooit in frontend-code, `.env`-bestanden die naar de client gaan, of de build-output terechtkomt.
 4. `table` en de velden in `patch` worden gevalideerd tegen een expliciete allowlist per tabel (`EDITABLE_COLUMNS`), zodat er nooit buiten de bedoelde kolommen (of tabellen als `trips` zelf) geschreven kan worden.
 
+Twee Edge Functions wijken hiervan af en schrijven zónder edit-tokencheck, met opzet:
+
+- **`flight-status`** werkt `transport_items.departure_time`/`arrival_time` bij op basis van
+  een externe, geverifieerde vluchtstatus-API (AeroDataBox) — dit is systeemsync van
+  publieke vluchtdata, geen wijziging door een gezinslid, dus geen tokencheck nodig. Wel
+  valideert de functie `transportItemId` en past alleen díe rij aan.
+- **`upload-day-photo`** valideert wél het edit-token (zelfde patroon als `save-edit`) vóór
+  het uploaden naar de publieke Storage-bucket `day-photos` en het aanmaken van een
+  `day_photos`-rij; alleen het schrijfpad (Storage + insert i.p.v. update) wijkt af omdat
+  `save-edit` alleen bestaande rijen kan bijwerken.
+
 ## De edit-token
 
 - Wordt gegenereerd als willekeurige string; alleen de SHA-256-hash staat in de database (`supabase/seed_trip.sql`).

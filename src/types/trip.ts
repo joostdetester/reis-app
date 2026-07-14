@@ -106,6 +106,14 @@ export interface PracticalInfo {
   sort_order: number
 }
 
+export interface DayPhoto {
+  id: string
+  trip_id: string
+  trip_day_id: string
+  storage_path: string
+  created_at: string
+}
+
 export interface Trip {
   id: string
   name: string

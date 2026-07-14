@@ -116,6 +116,15 @@ create table practical_info (
   sort_order int not null
 );
 
+-- Per-dag foto's, geïmporteerd via de Google Photos Picker API (zie upload-day-photo).
+create table day_photos (
+  id uuid primary key default gen_random_uuid(),
+  trip_id uuid not null references trips(id) on delete cascade,
+  trip_day_id uuid not null references trip_days(id) on delete cascade,
+  storage_path text not null,
+  created_at timestamptz not null default now()
+);
+
 -- ---------------------------------------------------------------------------
 -- Row Level Security
 --
@@ -164,12 +173,23 @@ create policy "destinations zijn publiek leesbaar" on destinations
 create policy "practical_info is publiek leesbaar" on practical_info
   for select using (true);
 
+alter table day_photos enable row level security;
+
+create policy "day_photos zijn publiek leesbaar" on day_photos
+  for select using (true);
+
 -- Geen insert/update/delete policies voor anon -> RLS blokkeert die standaard.
 -- Schrijven gebeurt uitsluitend via de Edge Function met de service-role key,
 -- die RLS omzeilt (service_role bypassing is standaard Supabase-gedrag).
 
+-- Publieke Storage-bucket voor de per-dag foto's (upload gaat via de Edge Function
+-- upload-day-photo, met de service-role key — leesverkeer mag rechtstreeks).
+insert into storage.buckets (id, name, public)
+values ('day-photos', 'day-photos', true)
+on conflict (id) do nothing;
+
 -- ---------------------------------------------------------------------------
 -- Realtime
 -- Zet in het dashboard (Database > Replication) realtime aan voor:
--- trip_days, accommodations, transport_items, activities, practical_info
+-- trip_days, accommodations, transport_items, activities, practical_info, day_photos
 -- ---------------------------------------------------------------------------

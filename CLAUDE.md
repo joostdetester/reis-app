@@ -40,12 +40,16 @@ Vaste mobiele navigatie onderaan:
 3. Hotels
 4. Vluchten
 
-Extra menu:
+Extra menu (in de header):
 
-- Praktische informatie
-- Zoeken
+- Tijdlijn
+- Bestemmingen
 - Kalender
-- Kaart
+- Reisroute (kaart met de vluchtroute)
+- Foto's & video's
+- Praktische informatie
+
+Zoeken zit ingebouwd in de tijdlijn op het Reis-tabblad (geen aparte pagina).
 
 ## Startpagina
 
@@ -134,13 +138,25 @@ Vanaf 24 uur voor vertrek een afteller tonen.
 De vluchtstatus-API kan met een schakelaar (alleen zichtbaar met edit-token) helemaal
 worden uitgezet, om binnen de quota van het gratis API-abonnement te blijven.
 
-## Zoeken en filteren
+## Zoeken
 
-- Zoeken in alle reisgegevens.
-- Filteren op type onderdeel:
-  - hotel;
-  - vervoer;
-  - activiteit.
+Ingebouwd in de tijdlijn op het Reis-tabblad: typen filtert de dagblokken direct tot
+alleen de treffers, en klapt die blokken meteen allemaal open.
+
+## Foto's & video's
+
+Aparte pagina (koppeling in de header). Toont:
+
+- de link naar het ene gedeelde Google Photos-album voor de hele reis;
+- per dag van de reis (kopje met dag + locatie) de foto's die voor die dag zijn
+  geïmporteerd, in een fotogrid.
+
+Foto's toevoegen kan alleen met edit-token, via "Foto's kiezen uit Google Photos" — dat
+opent Google's eigen kiesscherm (Google Photos Picker API) waarin een gezinslid zelf
+foto's aanwijst uit de eigen Google Photos (inclusief wat anderen in het gedeelde album
+hebben gezet). Gekozen foto's worden verkleind gedownload en opgeslagen in een eigen
+Supabase Storage-bucket — geen losse embed van Google Photos zelf (bestaat niet
+betrouwbaar/officieel voor gedeelde albums).
 
 ## Praktische informatie
 

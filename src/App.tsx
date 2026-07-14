@@ -7,7 +7,7 @@ import { TodayPage } from './pages/TodayPage'
 import { TripPage } from './pages/TripPage'
 import { HotelsPage } from './pages/HotelsPage'
 import { TransportPage } from './pages/TransportPage'
-import { SearchPage } from './pages/SearchPage'
+import { PhotosPage } from './pages/PhotosPage'
 import { PracticalPage } from './pages/PracticalPage'
 import { hasEditAccess } from './lib/tripAccess'
 
@@ -34,11 +34,11 @@ function Hero({ onOpenRouteMap }: { onOpenRouteMap: () => void }) {
           <button className="secondary" onClick={onOpenRouteMap}>
             🗺️ Reisroute
           </button>
+          <Link className="secondary" to="/photos">
+            📷 Foto's &amp; video's
+          </Link>
           <Link className="secondary" to="/practical">
             ☰ Praktisch
-          </Link>
-          <Link className="secondary" to="/search">
-            🔎 Zoeken
           </Link>
         </div>
       </div>
@@ -67,7 +67,7 @@ function App() {
           <Route path="/trip" element={<TripPage />} />
           <Route path="/hotels" element={<HotelsPage />} />
           <Route path="/transport" element={<TransportPage />} />
-          <Route path="/search" element={<SearchPage />} />
+          <Route path="/photos" element={<PhotosPage />} />
           <Route path="/practical" element={<PracticalPage />} />
         </Routes>
       </main>

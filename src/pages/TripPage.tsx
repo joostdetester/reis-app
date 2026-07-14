@@ -5,7 +5,6 @@ import { useTransportItems } from '../hooks/useTransportItems'
 import { useAccommodations } from '../hooks/useAccommodations'
 import { useTripDayAccommodations } from '../hooks/useTripDayAccommodations'
 import { useDestinations } from '../hooks/useDestinations'
-import { useTrip } from '../hooks/useTrip'
 import { DayCard } from '../components/DayCard'
 import { cityLabel, fmtLocalDateTime, formatDurationHM, shortDate, todayIndex, tripPhase } from '../utils/dates'
 import { matchesQuery } from '../utils/search'
@@ -73,31 +72,37 @@ function TimelineView({
   transportItems,
   accommodationByDay,
   lastDiveByDayId,
-  photosAlbumUrl,
 }: {
   days: TripDay[]
   transportItems: TransportItem[]
   accommodationByDay: Map<string, DayAccommodationInfo>
   lastDiveByDayId: Map<string, string>
-  photosAlbumUrl?: string | null
 }) {
   const [search, setSearch] = useState('')
   const [searchParams] = useSearchParams()
   const targetDate = searchParams.get('day')
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const hasAutoFocused = useRef(false)
+
+  // Standaard staat alles dicht; alleen het blok van de huidige dag (als die binnen de
+  // reis valt) is open en krijgt de focus. Een expliciete ?day=... (vanuit Kalender)
+  // overstemt dit.
+  const phase = tripPhase(days)
+  const todayBlockDate = phase === 'during' ? days[todayIndex(days)]?.travel_date : null
+  const openDate = targetDate ?? todayBlockDate ?? null
 
   useEffect(() => {
-    if (!targetDate) return
-    cardRefs.current.get(targetDate)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [targetDate])
+    if (targetDate) {
+      cardRefs.current.get(targetDate)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
+    if (todayBlockDate && !hasAutoFocused.current) {
+      hasAutoFocused.current = true
+      cardRefs.current.get(todayBlockDate)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [targetDate, todayBlockDate])
 
-  // Standaard: vóór de reis de eerste dag open, tijdens de reis alleen vandaag,
-  // na de reis alles dicht. Een expliciete ?day=... (vanuit Kalender) overstemt dit.
-  const phase = tripPhase(days)
-  const defaultOpenDate =
-    phase === 'before' ? days[0]?.travel_date : phase === 'during' ? days[todayIndex(days)]?.travel_date : null
-  const openDate = targetDate ?? defaultOpenDate
-
+  const searching = search.trim() !== ''
   const filtered = days.filter((d) => matchesQuery(d, search))
 
   return (
@@ -114,10 +119,9 @@ function TimelineView({
             day={d}
             transportItems={transportItems}
             accommodationInfo={accommodationByDay.get(d.id)}
-            collapsed={d.travel_date !== openDate}
+            collapsed={searching ? false : d.travel_date !== openDate}
             showMapLink={false}
             lastDiveNotice={lastDiveByDayId.get(d.id)}
-            photosAlbumUrl={photosAlbumUrl}
           />
         </div>
       ))}
@@ -337,7 +341,6 @@ export function TripPage() {
   const { accommodations } = useAccommodations()
   const { links } = useTripDayAccommodations()
   const { destinations } = useDestinations()
-  const { trip } = useTrip()
   const [searchParams, setSearchParams] = useSearchParams()
   const view = (searchParams.get('view') as TripView) || 'timeline'
 
@@ -356,7 +359,6 @@ export function TripPage() {
           transportItems={transportItems}
           accommodationByDay={accommodationByDay}
           lastDiveByDayId={lastDiveByDayId}
-          photosAlbumUrl={trip?.photos_album_url}
         />
       )}
       {view === 'destinations' && (
