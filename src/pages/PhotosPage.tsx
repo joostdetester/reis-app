@@ -5,7 +5,13 @@ import { useDayPhotos } from '../hooks/useDayPhotos'
 import { FieldRow } from '../components/FieldRow'
 import { hasEditAccess } from '../lib/tripAccess'
 import { requestGooglePhotosAccessToken } from '../lib/googlePhotosAuth'
-import { createPickerSession, downloadMediaItem, listSelectedMediaItems, waitForSelection } from '../lib/googlePhotosPicker'
+import {
+  createPickerSession,
+  downloadMediaItem,
+  listSelectedMediaItems,
+  waitForSelection,
+  type PickerSession,
+} from '../lib/googlePhotosPicker'
 import { uploadDayPhoto } from '../lib/uploadDayPhoto'
 import { fmtDate } from '../utils/dates'
 import type { DayPhoto, TripDay } from '../types/trip'
@@ -16,32 +22,58 @@ function dayPhotoUrl(storagePath: string): string {
   return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/day-photos/${storagePath}`
 }
 
+interface ReadySession {
+  accessToken: string
+  session: PickerSession
+}
+
+/**
+ * Twee losse tikken i.p.v. één doorlopende actie: mobiele browsers (vooral iOS Safari)
+ * staan meestal maar één pop-up per directe gebruikersactie toe. Inloggen bij Google
+ * (via GIS, opent zelf een pop-up) en het openen van het keuzescherm (onze eigen
+ * pop-up) zijn dus bewust twee aparte knoppen/tikken, elk met hun eigen pop-up.
+ */
 function DayPhotosCard({ day, photos }: { day: TripDay; photos: DayPhoto[] }) {
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [ready, setReady] = useState<ReadySession | null>(null)
 
-  async function handleImport() {
+  async function handlePrepare() {
     if (!GOOGLE_CLIENT_ID) {
-      setError("Foto-import is nog niet geconfigureerd (ontbrekende Google-client-ID).")
+      setError('Foto-import is nog niet geconfigureerd (ontbrekende Google-client-ID).')
       return
     }
-
-    // Meteen (synchroon binnen de kliklogica) een leeg tabblad openen, anders blokkeren
-    // browsers de latere redirect naar de picker-URL als "ongevraagde pop-up".
-    const popup = window.open('', '_blank')
-
     setBusy(true)
     setError(null)
     setStatus('Inloggen bij Google…')
     try {
       const accessToken = await requestGooglePhotosAccessToken(GOOGLE_CLIENT_ID)
-
-      setStatus("Kies foto's in het geopende tabblad…")
+      setStatus('Google Photos-sessie voorbereiden…')
       const session = await createPickerSession(accessToken)
-      if (popup) popup.location.href = session.pickerUri
-      else window.open(session.pickerUri, '_blank', 'noopener,noreferrer')
+      setReady({ accessToken, session })
+      setStatus('Klik op "Open keuzescherm" om foto\'s te kiezen.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Inloggen bij Google is mislukt')
+      setStatus(null)
+    } finally {
+      setBusy(false)
+    }
+  }
 
+  function handleOpenPicker() {
+    if (!ready) return
+    // Rechtstreeks in deze klik-handler, dus geen aparte async stap ervoor: dit is de
+    // enige pop-up die uit déze tik voortkomt.
+    window.open(ready.session.pickerUri, '_blank', 'noopener,noreferrer')
+    void handleAfterPicking(ready)
+  }
+
+  async function handleAfterPicking({ accessToken, session }: ReadySession) {
+    setBusy(true)
+    setError(null)
+    setStatus("Kies foto's in het geopende tabblad…")
+    try {
       await waitForSelection(session.id, accessToken)
 
       setStatus("Foto's ophalen…")
@@ -54,11 +86,11 @@ function DayPhotosCard({ day, photos }: { day: TripDay; photos: DayPhoto[] }) {
       }
       setStatus(items.length > 0 ? `${items.length} foto's toegevoegd.` : "Geen foto's gekozen.")
     } catch (err) {
-      popup?.close()
       setError(err instanceof Error ? err.message : 'Importeren is mislukt')
       setStatus(null)
     } finally {
       setBusy(false)
+      setReady(null)
     }
   }
 
@@ -77,10 +109,20 @@ function DayPhotosCard({ day, photos }: { day: TripDay; photos: DayPhoto[] }) {
       )}
       {hasEditAccess() && (
         <>
-          <button className="chip" onClick={() => void handleImport()} disabled={busy}>
-            📷 Foto's kiezen uit Google Photos
-          </button>
-          {status && <div className="muted" style={{ marginTop: 8 }}>{status}</div>}
+          {ready ? (
+            <button className="chip" onClick={handleOpenPicker} disabled={busy}>
+              ➡️ Open keuzescherm
+            </button>
+          ) : (
+            <button className="chip" onClick={() => void handlePrepare()} disabled={busy}>
+              📷 Foto's kiezen uit Google Photos
+            </button>
+          )}
+          {status && (
+            <div className="muted" style={{ marginTop: 8 }}>
+              {status}
+            </div>
+          )}
           {error && <div className="notice">{error}</div>}
         </>
       )}
