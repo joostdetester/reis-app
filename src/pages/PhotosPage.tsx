@@ -13,6 +13,7 @@ import {
   type PickerSession,
 } from '../lib/googlePhotosPicker'
 import { uploadDayPhoto } from '../lib/uploadDayPhoto'
+import { deleteDayPhoto } from '../lib/deleteDayPhoto'
 import { fmtDate } from '../utils/dates'
 import type { DayPhoto, TripDay } from '../types/trip'
 
@@ -20,6 +21,59 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undef
 
 function dayPhotoUrl(storagePath: string): string {
   return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/day-photos/${storagePath}`
+}
+
+/** Foto met een verwijderknop (alleen met edit-token), met een expliciete bevestigingsstap. */
+function PhotoThumbnail({ photo }: { photo: DayPhoto }) {
+  const [confirming, setConfirming] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleDelete() {
+    setDeleting(true)
+    setError(null)
+    try {
+      await deleteDayPhoto(photo.id)
+      // Succes: de rij verdwijnt vanzelf via de realtime-subscriptie, geen lokale state-reset nodig.
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Verwijderen is mislukt')
+      setDeleting(false)
+    }
+  }
+
+  function reset() {
+    setConfirming(false)
+    setError(null)
+  }
+
+  return (
+    <div className="photo-thumb">
+      <img src={dayPhotoUrl(photo.storage_path)} alt="" loading="lazy" />
+      {hasEditAccess() &&
+        (confirming ? (
+          <div className="photo-thumb-confirm">
+            {error ? (
+              <button onClick={reset} aria-label={error}>
+                ⚠️
+              </button>
+            ) : (
+              <>
+                <button onClick={() => void handleDelete()} disabled={deleting}>
+                  {deleting ? '…' : 'Ja'}
+                </button>
+                <button onClick={reset} disabled={deleting}>
+                  Nee
+                </button>
+              </>
+            )}
+          </div>
+        ) : (
+          <button className="photo-thumb-delete" onClick={() => setConfirming(true)} aria-label="Foto verwijderen">
+            ×
+          </button>
+        ))}
+    </div>
+  )
 }
 
 interface ReadySession {
@@ -101,7 +155,7 @@ function DayPhotosCard({ day, photos }: { day: TripDay; photos: DayPhoto[] }) {
       {photos.length > 0 ? (
         <div className="photo-grid">
           {photos.map((photo) => (
-            <img key={photo.id} src={dayPhotoUrl(photo.storage_path)} alt="" loading="lazy" />
+            <PhotoThumbnail key={photo.id} photo={photo} />
           ))}
         </div>
       ) : (
@@ -172,6 +226,16 @@ export function PhotosPage() {
                 Open het reisalbum
               </a>
             )}
+          </div>
+        )}
+        {dayPhotos.length > 0 && (
+          <div className="list-card">
+            <h3>🖼️ Alle foto's van de reis</h3>
+            <div className="photo-grid">
+              {dayPhotos.map((photo) => (
+                <PhotoThumbnail key={photo.id} photo={photo} />
+              ))}
+            </div>
           </div>
         )}
         {days.map((day) => (

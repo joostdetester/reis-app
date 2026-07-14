@@ -68,6 +68,13 @@ function blobToBase64(blob: Blob): Promise<string> {
   })
 }
 
+function extensionFor(contentType: string): string {
+  if (contentType.includes('png')) return '.png'
+  if (contentType.includes('webp')) return '.webp'
+  if (contentType.includes('gif')) return '.gif'
+  return '.jpg'
+}
+
 /** Haalt een verkleinde versie van de gekozen foto op (max 1600px) als base64. */
 export async function downloadMediaItem(
   item: PickerMediaItem,
@@ -79,5 +86,10 @@ export async function downloadMediaItem(
   })
   if (!response.ok) throw new Error(`Kon foto niet downloaden (${response.status})`)
   const blob = await response.blob()
-  return { base64: await blobToBase64(blob), contentType: item.mediaFile.mimeType, filename: item.mediaFile.filename }
+  // De "=w-h"-formaatparameter levert altijd een web-veilige JPEG terug, ook als het
+  // origineel dat niet is (bv. HEIC vanaf een iPhone) — dus het échte content-type van
+  // het antwoord gebruiken, niet het mimeType/de bestandsnaam van het origineel.
+  const contentType = response.headers.get('content-type') || blob.type || 'image/jpeg'
+  const filename = item.mediaFile.filename.replace(/\.[^.]+$/, '') + extensionFor(contentType)
+  return { base64: await blobToBase64(blob), contentType, filename }
 }

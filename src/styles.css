@@ -78,7 +78,11 @@ main{max-width:860px;margin:0 auto;padding:16px 16px 110px}
 .chip{border:1px solid var(--line);border-radius:999px;background:var(--card);padding:9px 13px;font-weight:800;color:var(--ink);box-shadow:0 8px 20px rgba(21,50,65,.05);white-space:nowrap;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease}
 .chip.active{background:linear-gradient(135deg,var(--sea) 0%,var(--sea2) 100%);color:#fff;border-color:transparent;box-shadow:0 12px 24px rgba(20,133,154,.18)}
 .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
-.photo-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:var(--sand)}
+.photo-thumb{position:relative}
+.photo-thumb img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:var(--sand);display:block}
+.photo-thumb-delete{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:999px;border:none;background:rgba(10,29,37,.65);color:#fff;font-weight:800;font-size:1rem;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+.photo-thumb-confirm{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(10,29,37,.75);border-radius:10px}
+.photo-thumb-confirm button{border:0;border-radius:8px;padding:6px 10px;font-weight:800;font-size:.8rem}
 .day-card{position:relative;background:var(--card);border:1px solid rgba(20,51,61,.08);border-radius:24px;margin:14px 0;overflow:hidden;box-shadow:0 20px 44px rgba(18,46,56,.08)}
 .day-card::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--gold),var(--sea),var(--sea2));opacity:.9}
 .day-head{display:flex;justify-content:space-between;gap:12px;padding:16px 16px 14px;background:linear-gradient(90deg, rgba(237,247,248,.85) 0%, rgba(255,252,246,.95) 100%);cursor:pointer;transition:background .15s ease,transform .12s ease}
