@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTripDays } from '../hooks/useTripDays'
 import { useDayPhotos } from '../hooks/useDayPhotos'
 import { hasEditAccess } from '../lib/tripAccess'
@@ -223,8 +223,22 @@ interface LightboxEntry {
 }
 
 const SWIPE_THRESHOLD_PX = 50
+const MIN_SCALE = 1
+const MAX_SCALE = 4
 
-/** Vergrote foto met navigatie (swipe + knoppen) door alle foto's van de reis, chronologisch over dagen heen. */
+type GestureMode = 'idle' | 'swipe' | 'pinch' | 'pan'
+
+function touchDistance(touches: React.TouchList): number {
+  const dx = touches[0].clientX - touches[1].clientX
+  const dy = touches[0].clientY - touches[1].clientY
+  return Math.hypot(dx, dy)
+}
+
+/**
+ * Vergrote foto met navigatie (swipe + knoppen) door alle foto's van de reis, chronologisch
+ * over dagen heen, plus pinch-to-zoom en (bij ingezoomd) verslepen met één vinger. Swipen om
+ * naar de vorige/volgende foto te gaan werkt alleen als er niet is ingezoomd.
+ */
 function Lightbox({
   entries,
   index,
@@ -236,8 +250,24 @@ function Lightbox({
   onClose: () => void
   onNavigate: (index: number) => void
 }) {
-  const touchStartX = useRef<number | null>(null)
+  const bodyRef = useRef<HTMLDivElement | null>(null)
+  const imgRef = useRef<HTMLImageElement | null>(null)
+  const gestureMode = useRef<GestureMode>('idle')
+  const touchStartX = useRef(0)
+  const pinchStartDistance = useRef(0)
+  const pinchStartScale = useRef(1)
+  const panStart = useRef({ x: 0, y: 0 })
+  const [scale, setScale] = useState(1)
+  const [translate, setTranslate] = useState({ x: 0, y: 0 })
+
   const entry = entries[index]
+
+  // Bij het wisselen van foto (navigeren, of opnieuw openen) altijd weer uitgezoomd tonen.
+  useEffect(() => {
+    setScale(1)
+    setTranslate({ x: 0, y: 0 })
+  }, [index])
+
   if (!entry) return null
 
   function goPrev() {
@@ -247,15 +277,66 @@ function Lightbox({
     if (index < entries.length - 1) onNavigate(index + 1)
   }
 
-  function handleTouchStart(e: React.TouchEvent) {
-    touchStartX.current = e.touches[0]?.clientX ?? null
+  /** Voorkomt dat de foto bij verslepen helemaal van het scherm verdwijnt. */
+  function clampTranslate(x: number, y: number, atScale: number): { x: number; y: number } {
+    const img = imgRef.current
+    const body = bodyRef.current
+    if (!img || !body) return { x, y }
+    const maxX = Math.max(0, (img.offsetWidth * atScale - body.offsetWidth) / 2)
+    const maxY = Math.max(0, (img.offsetHeight * atScale - body.offsetHeight) / 2)
+    return { x: Math.min(maxX, Math.max(-maxX, x)), y: Math.min(maxY, Math.max(-maxY, y)) }
   }
+
+  function handleTouchStart(e: React.TouchEvent) {
+    if (e.touches.length === 2) {
+      gestureMode.current = 'pinch'
+      pinchStartDistance.current = touchDistance(e.touches)
+      pinchStartScale.current = scale
+    } else if (e.touches.length === 1) {
+      if (scale > MIN_SCALE) {
+        gestureMode.current = 'pan'
+        panStart.current = { x: e.touches[0].clientX - translate.x, y: e.touches[0].clientY - translate.y }
+      } else {
+        gestureMode.current = 'swipe'
+        touchStartX.current = e.touches[0].clientX
+      }
+    }
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    if (gestureMode.current === 'pinch' && e.touches.length === 2) {
+      const ratio = touchDistance(e.touches) / pinchStartDistance.current
+      const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, pinchStartScale.current * ratio))
+      setScale(nextScale)
+      setTranslate((current) => clampTranslate(current.x, current.y, nextScale))
+    } else if (gestureMode.current === 'pan' && e.touches.length === 1) {
+      const next = { x: e.touches[0].clientX - panStart.current.x, y: e.touches[0].clientY - panStart.current.y }
+      setTranslate(clampTranslate(next.x, next.y, scale))
+    }
+  }
+
   function handleTouchEnd(e: React.TouchEvent) {
-    if (touchStartX.current === null) return
-    const delta = (e.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current
-    touchStartX.current = null
-    if (delta > SWIPE_THRESHOLD_PX) goPrev()
-    else if (delta < -SWIPE_THRESHOLD_PX) goNext()
+    if (gestureMode.current === 'swipe' && e.touches.length === 0) {
+      const delta = (e.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current
+      if (delta > SWIPE_THRESHOLD_PX) goPrev()
+      else if (delta < -SWIPE_THRESHOLD_PX) goNext()
+    }
+
+    if (e.touches.length === 1 && gestureMode.current === 'pinch') {
+      // Eén vinger losgelaten na een knijpgebaar: direct door kunnen slepen als er is ingezoomd.
+      if (scale > MIN_SCALE) {
+        gestureMode.current = 'pan'
+        panStart.current = { x: e.touches[0].clientX - translate.x, y: e.touches[0].clientY - translate.y }
+      } else {
+        gestureMode.current = 'idle'
+      }
+    } else if (e.touches.length === 0) {
+      gestureMode.current = 'idle'
+      if (scale <= MIN_SCALE) {
+        setScale(1)
+        setTranslate({ x: 0, y: 0 })
+      }
+    }
   }
 
   return (
@@ -270,18 +351,25 @@ function Lightbox({
         </button>
       </div>
       <div
+        ref={bodyRef}
         className="lightbox-body"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {index > 0 && (
+        {index > 0 && scale === MIN_SCALE && (
           <button className="lightbox-nav lightbox-prev" onClick={goPrev} aria-label="Vorige foto">
             ‹
           </button>
         )}
-        <img src={dayPhotoUrl(entry.photo.storage_path)} alt="" />
-        {index < entries.length - 1 && (
+        <img
+          ref={imgRef}
+          src={dayPhotoUrl(entry.photo.storage_path)}
+          alt=""
+          style={{ transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})` }}
+        />
+        {index < entries.length - 1 && scale === MIN_SCALE && (
           <button className="lightbox-nav lightbox-next" onClick={goNext} aria-label="Volgende foto">
             ›
           </button>

@@ -33,20 +33,18 @@ function Hero({
         <small>
           Gezinsreis
           {!hasEditAccess() && <span className="readonly-badge">Alleen-lezen</span>}
+          {!hasEditAccess() && (
+            <button className="google-login-link" onClick={onGoogleLogin} disabled={loggingIn}>
+              {loggingIn ? 'Bezig…' : '🔐 Inloggen'}
+            </button>
+          )}
           {hasEditAccess() && (
             <button className="logout-link" onClick={onRequestLogout}>
               Uitloggen
             </button>
           )}
         </small>
-        {!hasEditAccess() && (
-          <div className="google-login">
-            <button className="secondary" onClick={onGoogleLogin} disabled={loggingIn}>
-              {loggingIn ? 'Bezig met inloggen…' : '🔐 Inloggen met Google'}
-            </button>
-            {loginError && <div className="notice">{loginError}</div>}
-          </div>
-        )}
+        {!hasEditAccess() && loginError && <div className="notice google-login-notice">{loginError}</div>}
         <h1>Filipijnen 2026</h1>
         <p>23 juli – 13 augustus · 22 dagen</p>
         <WorldClock />

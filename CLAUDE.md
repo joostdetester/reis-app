@@ -149,7 +149,10 @@ Aparte pagina (koppeling in de header). Alleen foto's, geen video's (uploaden va
 video's werkt nog niet). Per dag van de reis (kopje met dag + locatie) een fotogrid;
 klikken op een foto toont 'm vergroot, met swipe + pijlknoppen om chronologisch door
 alle foto's van de hele reis te bladeren (over dag-grenzen heen) en dag + locatie
-bovenaan die meeverandert.
+bovenaan die meeverandert. In de vergrote weergave kan met twee vingers op de foto
+worden ingezoomd (pinch-to-zoom) en, eenmaal ingezoomd, met één vinger gesleept om
+verder in te scrollen; swipen om naar de vorige/volgende foto te gaan werkt alleen
+zolang er niet is ingezoomd.
 
 Foto's toevoegen kan alleen met edit-token, via "Foto's kiezen uit Google Photos" — dat
 opent Google's eigen kiesscherm (Google Photos Picker API) waarin een gezinslid zelf
