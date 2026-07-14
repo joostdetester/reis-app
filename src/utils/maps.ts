@@ -12,3 +12,12 @@ export function splitFlightNumbers(bookingReference: string): string[] {
     .map((code) => code.trim())
     .filter(Boolean)
 }
+
+/**
+ * Flightradar24-pagina voor een vluchtnummer (werkt met alleen het vluchtnummer, geen datum
+ * nodig), zodat er ook al doorgeklikt kan worden vóórdat onze eigen vluchtstatus-API iets weet.
+ */
+export function flightradar24Url(flightNumber: string): string {
+  const clean = flightNumber.replace(/\s+/g, '').toLowerCase()
+  return `https://www.flightradar24.com/data/flights/${encodeURIComponent(clean)}`
+}

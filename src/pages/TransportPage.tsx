@@ -20,7 +20,7 @@ import {
   isoDateInZone,
   toDatetimeLocalValue,
 } from '../utils/dates'
-import { flightMapUrl, splitFlightNumbers } from '../utils/maps'
+import { flightMapUrl, flightradar24Url, splitFlightNumbers } from '../utils/maps'
 import { isFlight } from '../utils/transport'
 import type { TransportItem } from '../types/trip'
 
@@ -195,26 +195,46 @@ function FlightStatusField({ item, apiEnabled }: { item: TransportItem; apiEnabl
     enabled,
   })
 
-  const value = !apiEnabled
+  // Statustekst zonder vluchtnummer-per-vluchtnummer-opsplitsing: die komt hieronder per code
+  // terug, samen met de doorklik-link naar Flightradar24 (die werkt sowieso al, ongeacht of onze
+  // eigen vluchtstatus-API al iets weet — vandaar dat de link niet van `enabled` afhangt).
+  const fallbackStatusText = !apiEnabled
     ? 'Vluchtstatus-API staat uit'
     : windowState === 'before'
       ? `Nog niet beschikbaar (pas vanaf ${STATUS_LOOKUP_BEFORE_HOURS} uur voor vertrek)`
       : windowState === 'after'
-        ? '-'
+        ? null
         : loading
           ? 'Bezig met ophalen…'
           : error
             ? error
-            : results
-              ? results.map((r) => `${r.flightNumber}: ${r.status}${r.delayMinutes ? ` (${r.delayMinutes} min)` : ''}`).join(' · ')
-              : '-'
+            : null
+
+  const resultByCode = new Map((results ?? []).map((r) => [r.flightNumber, r]))
 
   return (
     <div className="row">
       <div>📡</div>
       <div>
         <div className="kicker">Vluchtstatus</div>
-        <div className="value">{value}</div>
+        <div className="value">
+          {codes.length === 0
+            ? '-'
+            : codes.map((code, i) => {
+                const result = resultByCode.get(code)
+                const suffix = result
+                  ? `${result.status}${result.delayMinutes ? ` (${result.delayMinutes} min)` : ''}`
+                  : fallbackStatusText
+                return (
+                  <span key={code}>
+                    {i > 0 ? ' · ' : ''}
+                    <a target="_blank" rel="noreferrer" href={flightradar24Url(code)}>
+                      {suffix ? `${code}: ${suffix}` : code}
+                    </a>
+                  </span>
+                )
+              })}
+        </div>
       </div>
     </div>
   )

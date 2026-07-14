@@ -131,7 +131,11 @@ staat alleen in de dagweergave, niet op deze pagina). Per vlucht tonen:
 - vertrekhal, gate en aankomstterminal: automatisch overgenomen vanaf 2 uur voor
   vertrek resp. aankomst (daarvoor "Nog niet beschikbaar"), en bewerkbaar zodra bekend;
 - vluchtstatus: actuele status (op tijd/vertraagd/geannuleerd/geland/...), automatisch
-  opgehaald vanaf 48 uur voor vertrek tot 24 uur na aankomst.
+  opgehaald vanaf 48 uur voor vertrek tot 24 uur na aankomst. Het vluchtnummer is altijd
+  (dus ook ver vóór het opgehaald-venster, of met de vluchtstatus-API uitgezet) een link
+  naar de Flightradar24-pagina van die vlucht, zodat al doorgeklikt kan worden naar meer
+  informatie voordat onze eigen status bekend is. Bij een vlucht met overstap (meerdere
+  vluchtnummers) krijgt elk vluchtnummer zijn eigen link.
 
 Vanaf 24 uur voor vertrek een afteller tonen.
 
