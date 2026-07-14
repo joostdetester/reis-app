@@ -25,7 +25,9 @@ export function TodayPage() {
   return (
     <>
       <Countdown />
-      <div className="notice">Tijdens de reis opent de app automatisch op vandaag en morgen.</div>
+      <div className="notice">
+        Tijdens de reis opent de app automatisch op vandaag en morgen, zodat de hele familie direct ziet wat er op de planning staat.
+      </div>
       {upcoming.map((day) => (
         <DayCard
           key={day.id}

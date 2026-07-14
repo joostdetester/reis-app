@@ -30,6 +30,7 @@ const EDITABLE_COLUMNS: Record<string, string[]> = {
     'delay_minutes',
     'maps_url',
     'status',
+    'schedule_changed',
   ],
   activities: ['title', 'day_part', 'exact_time', 'status', 'category', 'address', 'maps_url'],
   destinations: ['name', 'summary', 'restaurants', 'practical_tips', 'bad_weather_alternatives', 'dive_shops', 'photo_url'],

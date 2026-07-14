@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type { TransportItem, TripDay } from '../types/trip'
 import type { DayAccommodationInfo } from '../utils/dayAccommodations'
 import { fmtDate, formatDurationHM, formatFlightTimes, fmtPhilippineTime } from '../utils/dates'
+import { isFlight } from '../utils/transport'
 import { DayWeather } from './DayWeather'
 import { EditButton } from './EditButton'
 import { EditSheet } from './EditSheet'
@@ -34,12 +35,18 @@ function TransportLine({ item }: { item: TransportItem }) {
   const duration =
     item.departure_time && item.arrival_time ? formatDurationHM(item.departure_time, item.arrival_time) : null
   const timesWithDuration = times && duration ? `${times} - vluchtduur: ${duration}` : times
+  const icon = isFlight(item) ? '✈️' : '🚐'
+  const text = `${icon} ${[summary || item.type, route, timesWithDuration].filter(Boolean).join(' · ')}`
 
-  return (
-    <Link className="day-transport" to={`/transport?item=${item.id}`} onClick={(e) => e.stopPropagation()}>
-      🚐 {[summary || item.type, route, timesWithDuration].filter(Boolean).join(' · ')}
-    </Link>
-  )
+  if (isFlight(item)) {
+    return (
+      <Link className="day-transport" to={`/transport?item=${item.id}`} onClick={(e) => e.stopPropagation()}>
+        {text}
+      </Link>
+    )
+  }
+
+  return <div className="day-transport">{text}</div>
 }
 
 function HotelLine({ info }: { info: DayAccommodationInfo }) {
@@ -77,7 +84,19 @@ export function DayCard({
 
   return (
     <article className={`day-card ${isCollapsed ? 'collapsed' : ''}`}>
-      <div className="day-head" onClick={() => setIsCollapsed((c) => !c)}>
+      <div
+        className="day-head"
+        role="button"
+        tabIndex={0}
+        aria-expanded={!isCollapsed}
+        onClick={() => setIsCollapsed((c) => !c)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            setIsCollapsed((c) => !c)
+          }
+        }}
+      >
         <div>
           <div className="day-title">{day.location}</div>
           <div className="day-date">{fmtDate(day.travel_date)}</div>

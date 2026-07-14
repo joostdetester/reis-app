@@ -72,6 +72,38 @@ export function fmtLocalDateTime(iso: string, locationName: string | null | unde
   }).format(new Date(iso))
 }
 
+/** Verschil (in minuten) tussen `timeZone` en UTC, op het gegeven moment (houdt rekening met zomertijd). */
+function zoneOffsetMinutes(date: Date, timeZone: string): number {
+  const asZoned = new Date(date.toLocaleString('en-US', { timeZone }))
+  const asUtc = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }))
+  return (asZoned.getTime() - asUtc.getTime()) / 60_000
+}
+
+/** Zet een timestamptz om naar een waarde voor een `<input type="datetime-local">`, in de klokstijd van `timeZone`. */
+export function toDatetimeLocalValue(iso: string, timeZone: string): string {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+      .formatToParts(new Date(iso))
+      .map((p) => [p.type, p.value]),
+  )
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`
+}
+
+/** Keert `toDatetimeLocalValue` om: leest een datetime-local waarde als klokstijd in `timeZone` en geeft de bijbehorende timestamptz (ISO, UTC) terug. */
+export function fromDatetimeLocalValue(value: string, timeZone: string): string {
+  const asIfUtc = new Date(`${value}:00Z`)
+  const offsetMinutes = zoneOffsetMinutes(asIfUtc, timeZone)
+  return new Date(asIfUtc.getTime() - offsetMinutes * 60_000).toISOString()
+}
+
 /** Vertrektijd in lokale tijd vertrekland, met de aankomsttijd (lokale tijd aankomstland) erachter tussen haakjes. */
 export function formatFlightTimes(
   departureTime: string | null,

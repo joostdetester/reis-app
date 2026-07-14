@@ -54,6 +54,7 @@ export interface TransportItem {
   delay_minutes: number | null
   maps_url: string | null
   status: string | null
+  schedule_changed: boolean
   updated_at: string
 }
 

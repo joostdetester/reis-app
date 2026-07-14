@@ -13,6 +13,7 @@ import { buildDayAccommodationMap, type DayAccommodationInfo } from '../utils/da
 import { computeLastDiveInfo } from '../utils/lastDive'
 import { buildDestinationBlocks, flightContext, type DestinationBlock } from '../utils/destinationBlocks'
 import { flightMapUrl } from '../utils/maps'
+import { isFlight } from '../utils/transport'
 import type { Destination, TransportItem, TripDay } from '../types/trip'
 
 // Bronvermelding voor de bestemmingsfoto's (CC BY(-SA) vereist credit + link naar de bron).
@@ -162,7 +163,7 @@ function BlockFlights({
   transportItems: TransportItem[]
 }) {
   const dayIds = new Set(block.days.map((d) => d.id))
-  const items = transportItems.filter((t) => dayIds.has(t.trip_day_id) && /vlucht/i.test(t.type))
+  const items = transportItems.filter((t) => dayIds.has(t.trip_day_id) && isFlight(t))
   if (items.length === 0) return null
 
   return (
@@ -340,14 +341,14 @@ export function TripPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const view = (searchParams.get('view') as TripView) || 'timeline'
 
-  if (loading) return <div className="notice">Laden…</div>
-  if (error) return <div className="notice">{error}</div>
+  if (loading) return <div className="linear-trip"><div className="notice">Laden…</div></div>
+  if (error) return <div className="linear-trip"><div className="notice">{error}</div></div>
 
   const accommodationByDay = buildDayAccommodationMap(days, links, accommodations)
   const lastDiveByDayId = new Map(computeLastDiveInfo(days, destinations, transportItems).map((i) => [i.lastDayId, i.text]))
 
   return (
-    <>
+    <div className="linear-trip">
       <Toolbar view={view} onChange={(v) => setSearchParams({ view: v })} />
       {view === 'timeline' && (
         <TimelineView
@@ -367,6 +368,6 @@ export function TripPage() {
         />
       )}
       {view === 'calendar' && <CalendarView days={days} />}
-    </>
+    </div>
   )
 }

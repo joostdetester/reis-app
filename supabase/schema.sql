@@ -75,6 +75,7 @@ create table transport_items (
   delay_minutes int,
   maps_url text,
   status text,
+  schedule_changed boolean not null default false,
   updated_at timestamptz not null default now()
 );
 

@@ -51,6 +51,7 @@ function flight(tripDayId: string, departureTime: string, origin = 'El Nido (ENI
     delay_minutes: null,
     maps_url: null,
     status: null,
+    schedule_changed: false,
     updated_at: '',
   }
 }

@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { countdownTo, fmtDate, hoursUntil, shortDate, todayIndex, todayIso } from './dates'
+import {
+  countdownTo,
+  fmtDate,
+  fromDatetimeLocalValue,
+  hoursUntil,
+  shortDate,
+  todayIndex,
+  todayIso,
+  toDatetimeLocalValue,
+} from './dates'
 
 describe('fmtDate', () => {
   it('formatteert een ISO-datum als volledige Nederlandse datum', () => {
@@ -63,5 +72,31 @@ describe('hoursUntil', () => {
 
   it('geeft null als het tijdstip al voorbij is', () => {
     expect(hoursUntil('2026-07-23T20:00:00', new Date('2026-07-23T21:00:00'))).toBeNull()
+  })
+})
+
+describe('toDatetimeLocalValue', () => {
+  it('toont een UTC-tijdstip in de klokstijd van Asia/Manila (UTC+8)', () => {
+    expect(toDatetimeLocalValue('2026-07-25T01:50:00Z', 'Asia/Manila')).toBe('2026-07-25T09:50')
+  })
+
+  it('toont een UTC-tijdstip in de klokstijd van Europe/Amsterdam (zomertijd, UTC+2)', () => {
+    expect(toDatetimeLocalValue('2026-07-23T18:25:00Z', 'Europe/Amsterdam')).toBe('2026-07-23T20:25')
+  })
+})
+
+describe('fromDatetimeLocalValue', () => {
+  it('zet klokstijd in Asia/Manila om naar UTC', () => {
+    expect(fromDatetimeLocalValue('2026-07-25T09:50', 'Asia/Manila')).toBe('2026-07-25T01:50:00.000Z')
+  })
+
+  it('zet klokstijd in Europe/Amsterdam (zomertijd) om naar UTC', () => {
+    expect(fromDatetimeLocalValue('2026-07-23T20:25', 'Europe/Amsterdam')).toBe('2026-07-23T18:25:00.000Z')
+  })
+
+  it('is de omgekeerde van toDatetimeLocalValue', () => {
+    const iso = '2026-08-13T09:10:00Z'
+    const local = toDatetimeLocalValue(iso, 'Asia/Muscat')
+    expect(fromDatetimeLocalValue(local, 'Asia/Muscat')).toBe(new Date(iso).toISOString())
   })
 })

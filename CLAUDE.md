@@ -38,7 +38,7 @@ Vaste mobiele navigatie onderaan:
 1. Vandaag
 2. Reis
 3. Hotels
-4. Vervoer
+4. Vluchten
 
 Extra menu:
 
@@ -112,16 +112,19 @@ Aparte pagina met:
 
 Geen documenten tonen.
 
-## Vervoer
+## Vluchten
 
-Aparte pagina met:
+Aparte pagina, uitsluitend vluchten (ander vervoer zoals boot, scooter, taxi of ferry
+staat alleen in de dagweergave, niet op deze pagina). Per vlucht tonen:
 
 - datum;
 - traject;
-- vertrek- en aankomsttijd;
+- vertrek- en aankomsttijd, bewerkbaar; bij wijziging een waarschuwing tonen dat de
+  vluchttijden zijn aangepast;
 - vervoerder;
-- boekingsnummer;
+- vluchtnummer;
 - vertrek- en aankomstlocatie;
+- vertrekhal, gate en aankomstterminal, bewerkbaar zodra bekend;
 - routeknop.
 
 Vanaf 24 uur voor vertrek een afteller tonen.

@@ -13,7 +13,7 @@ export function Countdown() {
         <div className="kicker">Tot vertrek</div>
         <strong>{text}</strong>
       </div>
-      <div style={{ textAlign: 'right' }}>
+      <div className="countdown-highlight">
         <div className="kicker">Eerste vlucht</div>
         <b>WY172 · 20:25</b>
       </div>

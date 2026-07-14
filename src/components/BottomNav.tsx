@@ -4,7 +4,7 @@ const ITEMS = [
   { to: '/today', icon: '☀️', label: 'Vandaag' },
   { to: '/trip', icon: '🗺️', label: 'Reis' },
   { to: '/hotels', icon: '🏨', label: 'Hotels' },
-  { to: '/transport', icon: '✈️', label: 'Vervoer' },
+  { to: '/transport', icon: '✈️', label: 'Vluchten' },
 ]
 
 export function BottomNav() {

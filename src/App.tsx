@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { HashRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
 import { BottomNav } from './components/BottomNav'
+import { RouteMap } from './components/RouteMap'
 import { WorldClock } from './components/WorldClock'
 import { TodayPage } from './pages/TodayPage'
 import { TripPage } from './pages/TripPage'
@@ -9,29 +11,41 @@ import { SearchPage } from './pages/SearchPage'
 import { PracticalPage } from './pages/PracticalPage'
 import { hasEditAccess } from './lib/tripAccess'
 
-function Hero() {
+function Hero({ onOpenRouteMap }: { onOpenRouteMap: () => void }) {
   return (
     <header className="hero">
-      <small>Gezinsreis{!hasEditAccess() && <span className="readonly-badge">Alleen-lezen</span>}</small>
-      <h1>Filipijnen 2026 🇵🇭</h1>
-      <p>23 juli – 13 augustus · 22 dagen</p>
-      <WorldClock />
-      <div className="top-actions">
-        <Link className="secondary" to="/trip?view=timeline">
-          📜 Tijdlijn
-        </Link>
-        <Link className="secondary" to="/trip?view=destinations">
-          🏝️ Bestemmingen
-        </Link>
-        <Link className="secondary" to="/trip?view=calendar">
-          📅 Kalender
-        </Link>
-        <Link className="secondary" to="/practical">
-          ☰ Praktisch
-        </Link>
-        <Link className="secondary" to="/search">
-          🔎 Zoeken
-        </Link>
+      <div className="hero-content">
+        <small>
+          Gezinsreis{!hasEditAccess() && <span className="readonly-badge">Alleen-lezen</span>}
+        </small>
+        <h1>Filipijnen 2026</h1>
+        <p>23 juli – 13 augustus · 22 dagen · een luxe, praktische reisroute met hotels, vervoer en ruimte voor spontane tropische momenten.</p>
+        <div className="hero-meta">
+          <span className="hero-chip">🌴 Tropische reis</span>
+          <span className="hero-chip">🧭 Vandaag & morgen</span>
+          <span className="hero-chip">📍 Hotels & vluchten</span>
+        </div>
+        <WorldClock />
+        <div className="top-actions">
+          <Link className="secondary" to="/trip?view=timeline">
+            📜 Tijdlijn
+          </Link>
+          <Link className="secondary" to="/trip?view=destinations">
+            🏝️ Bestemmingen
+          </Link>
+          <Link className="secondary" to="/trip?view=calendar">
+            📅 Kalender
+          </Link>
+          <button className="secondary" onClick={onOpenRouteMap}>
+            🗺️ Reisroute
+          </button>
+          <Link className="secondary" to="/practical">
+            ☰ Praktisch
+          </Link>
+          <Link className="secondary" to="/search">
+            🔎 Zoeken
+          </Link>
+        </div>
       </div>
       <a
         className="hero-credit"
@@ -46,9 +60,11 @@ function Hero() {
 }
 
 function App() {
+  const [showRouteMap, setShowRouteMap] = useState(false)
+
   return (
     <HashRouter>
-      <Hero />
+      <Hero onOpenRouteMap={() => setShowRouteMap(true)} />
       <main>
         <Routes>
           <Route path="/" element={<Navigate to="/today" replace />} />
@@ -61,6 +77,19 @@ function App() {
         </Routes>
       </main>
       <BottomNav />
+      {showRouteMap && (
+        <div className="overlay" onClick={() => setShowRouteMap(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <h2>Reisroute</h2>
+            <RouteMap />
+            <div className="actions">
+              <button className="primary" onClick={() => setShowRouteMap(false)}>
+                Sluiten
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </HashRouter>
   )
 }
