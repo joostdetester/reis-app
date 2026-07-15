@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildDestinationBlocks } from './destinationBlocks'
+import { buildDestinationBlocks, sharedBoundaryDayIds } from './destinationBlocks'
 import type { TripDay } from '../types/trip'
 
 function day(date: string, island: string, location: string = island): TripDay {
@@ -76,5 +76,14 @@ describe('buildDestinationBlocks', () => {
     expect(blocks.map((b) => b.name)).toEqual(['Cebu - Cebu City', 'Cebu - Moalboal'])
     expect(blocks[0].days.map((d) => d.travel_date)).toEqual(['2026-08-01', '2026-08-02'])
     expect(blocks[1].days.map((d) => d.travel_date)).toEqual(['2026-08-04', '2026-08-07'])
+  })
+})
+
+describe('sharedBoundaryDayIds', () => {
+  it('herkent de overstapdag tussen twee blokken, maar geen gewone dagen', () => {
+    const days = [day('2026-07-24', 'Luzon'), day('2026-07-25', 'Luzon → Palawan'), day('2026-07-26', 'Palawan')]
+    const blocks = buildDestinationBlocks(days)
+
+    expect(sharedBoundaryDayIds(blocks)).toEqual(new Set(['2026-07-25']))
   })
 })

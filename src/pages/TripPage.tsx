@@ -10,7 +10,7 @@ import { cityLabel, fmtLocalDateTime, formatDurationHM, shortDate, todayIndex, t
 import { matchesQuery } from '../utils/search'
 import { buildDayAccommodationMap, type DayAccommodationInfo } from '../utils/dayAccommodations'
 import { computeLastDiveInfo } from '../utils/lastDive'
-import { buildDestinationBlocks, flightContext, type DestinationBlock } from '../utils/destinationBlocks'
+import { buildDestinationBlocks, flightContext, sharedBoundaryDayIds, type DestinationBlock } from '../utils/destinationBlocks'
 import { flightMapUrl } from '../utils/maps'
 import { isFlight } from '../utils/transport'
 import type { Destination, TransportItem, TripDay } from '../types/trip'
@@ -202,18 +202,30 @@ function BlockFlights({
 function BlockAccommodations({
   block,
   accommodationByDay,
+  sharedDayIds,
 }: {
   block: DestinationBlock
   accommodationByDay: Map<string, DayAccommodationInfo>
+  sharedDayIds: Set<string>
 }) {
+  // Een overstapdag zit in zowel het vertrek- als het aankomstblok. Het hotel dat aan
+  // zo'n dag gekoppeld is, telt hier alleen mee als het ook op een niet-overstapdag
+  // binnen dit blok voorkomt — anders hoort het bij het andere blok van die overstap.
+  const ownAccommodationIds = new Set(
+    block.days
+      .filter((d) => !sharedDayIds.has(d.id))
+      .map((d) => accommodationByDay.get(d.id)?.accommodation.id)
+      .filter((id): id is string => Boolean(id)),
+  )
+
   const seen = new Set<string>()
   const infos: DayAccommodationInfo[] = []
   for (const day of block.days) {
     const info = accommodationByDay.get(day.id)
-    if (info && !seen.has(info.accommodation.id)) {
-      seen.add(info.accommodation.id)
-      infos.push(info)
-    }
+    if (!info || seen.has(info.accommodation.id)) continue
+    if (sharedDayIds.has(day.id) && !ownAccommodationIds.has(info.accommodation.id)) continue
+    seen.add(info.accommodation.id)
+    infos.push(info)
   }
   if (infos.length === 0) return null
 
@@ -243,6 +255,7 @@ function DestinationsView({
   accommodationByDay: Map<string, DayAccommodationInfo>
 }) {
   const blocks = buildDestinationBlocks(days)
+  const sharedDayIds = sharedBoundaryDayIds(blocks)
   const destinationByName = new Map(destinations.map((d) => [d.name, d]))
 
   return (
@@ -285,7 +298,7 @@ function DestinationsView({
               {shortDate(block.days[0].travel_date)} – {shortDate(block.days[block.days.length - 1].travel_date)}
             </div>
             <BlockFlights block={block} totalDays={days.length} transportItems={transportItems} />
-            <BlockAccommodations block={block} accommodationByDay={accommodationByDay} />
+            <BlockAccommodations block={block} accommodationByDay={accommodationByDay} sharedDayIds={sharedDayIds} />
             <p>
               <b>Activiteiten:</b> {activities.length > 0 ? activities.join(', ') : '-'}
             </p>

@@ -134,3 +134,20 @@ function splitBySubLocation(block: DestinationBlock): DestinationBlock[] {
 export function buildDestinationBlocks(days: TripDay[]): DestinationBlock[] {
   return buildIslandBlocks(days).flatMap(splitBySubLocation)
 }
+
+/**
+ * Dag-id's die als overstapdag in twee bestemmingsblokken tegelijk voorkomen (het
+ * vertrekblok én het aankomstblok). Nodig om te bepalen bij welk blok een accommodatie
+ * die op zo'n dag gekoppeld is, hoort: puur op basis van "komt deze dag in dit blok
+ * voor" zou het hotel van de nieuwe bestemming ten onrechte ook bij de vorige
+ * bestemming getoond worden (en andersom).
+ */
+export function sharedBoundaryDayIds(blocks: DestinationBlock[]): Set<string> {
+  const counts = new Map<string, number>()
+  for (const block of blocks) {
+    for (const day of block.days) {
+      counts.set(day.id, (counts.get(day.id) ?? 0) + 1)
+    }
+  }
+  return new Set([...counts].filter(([, count]) => count > 1).map(([id]) => id))
+}
