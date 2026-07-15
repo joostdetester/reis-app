@@ -31,6 +31,9 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,4 +41,17 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run test
+      - run: npm run test:coverage
+      - name: Testoverzicht
+        if: always()
+        uses: dorny/test-reporter@v3
+        with:
+          name: Vitest resultaten
+          path: test-results/junit.xml
+          reporter: java-junit
+          use-actions-summary: 'true'
+      - name: Coverage-rapport
+        if: always()
+        uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          comment-on: 'none'
