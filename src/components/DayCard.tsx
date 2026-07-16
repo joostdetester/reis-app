@@ -8,6 +8,7 @@ import { DayWeather } from './DayWeather'
 import { EditButton } from './EditButton'
 import { EditSheet } from './EditSheet'
 import { FieldRow } from './FieldRow'
+import { FormattedText } from './FormattedText'
 import { saveEdit } from '../lib/saveEdit'
 
 type PartField = 'morning_text' | 'afternoon_text' | 'evening_text'
@@ -139,7 +140,9 @@ export function DayCard({
           {(['morning_text', 'afternoon_text', 'evening_text'] as const).map((field) => (
             <div className="part" key={field} data-testid={`day-part-${field}-${day.id}`}>
               <div className="kicker">{PART_LABELS[field]}</div>
-              <b data-testid={`day-part-${field}-${day.id}-value`}>{day[field] ?? 'Nog in te vullen'}</b>
+              <div className="part-value" data-testid={`day-part-${field}-${day.id}-value`}>
+                <FormattedText text={day[field] ?? 'Nog in te vullen'} />
+              </div>
               <EditButton onClick={() => setEditingPart(field)} testId={`day-part-${field}-${day.id}-edit`} />
             </div>
           ))}

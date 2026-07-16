@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { EditButton } from './EditButton'
 import { EditSheet } from './EditSheet'
+import { FormattedText } from './FormattedText'
 import { saveEdit } from '../lib/saveEdit'
 
 interface FieldRowProps {
@@ -35,8 +36,10 @@ export function FieldRow({ icon, label, value, table, id, field, placeholder = '
             <a target="_blank" rel="noreferrer" href={href}>
               {value}
             </a>
+          ) : value ? (
+            <FormattedText text={value} />
           ) : (
-            value || placeholder
+            placeholder
           )}
         </div>
       </div>

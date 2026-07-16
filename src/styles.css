@@ -115,14 +115,18 @@ main{max-width:860px;margin:0 auto;padding:16px 16px 110px}
 .day-body{padding:6px 16px 16px}
 .row{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:start;padding:12px 0;border-bottom:1px solid #eef2f4;text-decoration:none}
 .row:last-child{border-bottom:0}
-.value{font-weight:800;margin-top:2px;line-height:1.45}
+.value{font-weight:800;margin-top:2px;line-height:1.45;white-space:pre-wrap}
+.value ul{margin:2px 0 0 18px;padding:0}
+.value li{margin:2px 0}
 .edit{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--sea);font-weight:800;padding:7px 12px;transition:background .15s ease,transform .12s ease}
 .edit:active{transform:scale(.96);background:var(--sky)}
 .parts{display:grid;gap:9px;margin-top:12px}
 .part{position:relative;border-radius:16px;padding:12px 58px 12px 12px;background:linear-gradient(135deg,#fff7e8 0%,#fdfbf7 100%);border:1px solid rgba(21,50,65,.06)}
 .part:nth-child(2){background:linear-gradient(135deg,#eef8fb 0%,#fdfefe 100%)}
 .part:nth-child(3){background:linear-gradient(135deg,#f5efe5 0%,#fdfbf7 100%)}
-.part b{display:block;margin-top:4px;line-height:1.45}
+.part .part-value{display:block;margin-top:4px;line-height:1.45;font-weight:700;white-space:pre-wrap}
+.part .part-value ul{margin:2px 0 0 18px;padding:0}
+.part .part-value li{margin:2px 0}
 .part .edit{position:absolute;right:9px;top:9px}
 .map-link{display:flex;justify-content:space-between;align-items:center;min-height:44px;text-decoration:none;background:#f5f8fb;border:1px solid var(--line);padding:12px 13px;border-radius:14px;margin-top:12px;font-weight:800;transition:background .15s ease,transform .12s ease}
 .map-link:active{transform:scale(.98);background:var(--sky)}
@@ -194,7 +198,7 @@ main{max-width:860px;margin:0 auto;padding:16px 16px 110px}
 .linear-trip .edit{border:1px solid var(--lx-border);border-radius:10px;background:var(--lx-bg);color:var(--lx-text);font-weight:700;font-size:.78rem;padding:6px 9px}
 .linear-trip .parts{gap:8px;margin-top:10px}
 .linear-trip .part{border-radius:14px;padding:12px 56px 12px 12px;background:var(--lx-bg);border:1px solid var(--lx-border)}
-.linear-trip .part b{font-weight:600}
+.linear-trip .part .part-value{font-weight:600}
 .linear-trip .map-link{background:var(--lx-bg);border:1px solid var(--lx-border);border-radius:12px;padding:11px 12px;font-weight:700}
 .linear-trip .kicker{font-size:.68rem;letter-spacing:.12em}
 .linear-trip .notice{background:var(--lx-surface);border-left:3px solid var(--lx-danger);color:var(--lx-text);border-radius:12px}
