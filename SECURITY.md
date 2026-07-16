@@ -8,7 +8,9 @@ Alle tabellen hebben een RLS-policy die `select` toestaat voor de anon-rol, zond
 
 `trips.access_token_hash` wordt in de frontend-hooks nooit geselecteerd, ook al staat de kolom achter een publieke leespolicy.
 
-Een link zonder `?token=...` is dus de "alleen-lezen"-link: geschikt om te delen met mensen die het reisplan mogen zien maar niet mogen wijzigen. De UI toont dan nergens een "Bewerk"-knop (zie `src/components/EditButton.tsx`, gebaseerd op `hasEditAccess()` in `src/lib/tripAccess.ts`) en laat een "Alleen-lezen"-badge in de header zien. Dit is puur een UI-gemak — de eigenlijke afdwinging gebeurt hieronder bij "Schrijven", dus zelfs zonder deze UI-check zou een schrijfpoging zonder geldige token al falen.
+Een link zonder `?token=...` is dus de "alleen-lezen"-link: geschikt om te delen met mensen die het reisplan mogen zien maar niet mogen wijzigen. De UI toont dan nergens een "Bewerk"-knop en laat een "Alleen-lezen"-badge in de header zien. Dit is puur een UI-gemak — de eigenlijke afdwinging gebeurt hieronder bij "Schrijven", dus zelfs zonder deze UI-check zou een schrijfpoging zonder geldige token al falen.
+
+Welke token-waarde er ook in de link staat, "Schrijven" hieronder was al veilig: `save-edit` valideert altijd tegen de echte hash. Maar de UI-check zelf keek aanvankelijk alleen of er *een* token aanwezig was (`hasEditAccess()` in `src/lib/tripAccess.ts`), niet of die klopte — een verzonnen token liet dus wel Bewerk-knoppen zien, die pas bij een opslagpoging faalden. De read-only Edge Function `verify-edit-token` (`supabase/functions/verify-edit-token/index.ts`) lost dat op: dezelfde hash-vergelijking als `save-edit`, maar zonder te schrijven. `src/lib/editAccessContext.tsx` roept 'm bij het opstarten eenmaal aan en toont Bewerk-knoppen pas na een bevestigd geldig antwoord (`src/components/EditButton.tsx`, `App.tsx`, `TransportPage.tsx`, `PhotosPage.tsx` gebruiken allemaal `useHasEditAccess()` hiervoor). Puur een UX-verbetering — geen nieuwe autorisatiegrens, want die lag al bij `save-edit`.
 
 ## Schrijven
 
