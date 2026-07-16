@@ -10,7 +10,7 @@ afterEach(() => {
 
 describe('EditButton', () => {
   it('toont niets zonder edit-token (alleen-lezen)', () => {
-    render(<EditButton onClick={vi.fn()} />)
+    render(<EditButton onClick={vi.fn()} testId="test-edit" />)
     expect(screen.queryByText('Bewerk')).not.toBeInTheDocument()
   })
 
@@ -18,9 +18,9 @@ describe('EditButton', () => {
     window.history.replaceState(null, '', '/?token=geheim123')
     captureEditTokenFromUrl()
     const onClick = vi.fn()
-    render(<EditButton onClick={onClick} />)
+    render(<EditButton onClick={onClick} testId="test-edit" />)
 
-    const button = screen.getByText('Bewerk')
+    const button = screen.getByTestId('test-edit')
     expect(button).toBeInTheDocument()
     fireEvent.click(button)
     expect(onClick).toHaveBeenCalledTimes(1)

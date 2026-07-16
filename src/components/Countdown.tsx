@@ -8,12 +8,12 @@ const FIRST_DEPARTURE = '2026-07-23T20:25:00'
 export function Countdown() {
   const { text } = countdownTo(FIRST_DEPARTURE)
   return (
-    <div className="panel countdown">
+    <div className="panel countdown" data-testid="countdown">
       <div>
         <div className="kicker">Tot vertrek</div>
-        <strong>{text}</strong>
+        <strong data-testid="countdown-value">{text}</strong>
       </div>
-      <div className="countdown-highlight">
+      <div className="countdown-highlight" data-testid="countdown-next-flight">
         <div className="kicker">Eerste vlucht</div>
         <b>WY172 · 20:25</b>
       </div>

@@ -5,9 +5,10 @@ interface EditSheetProps {
   value: string
   onCancel: () => void
   onSave: (value: string) => Promise<void>
+  testId: string
 }
 
-export function EditSheet({ label, value, onCancel, onSave }: EditSheetProps) {
+export function EditSheet({ label, value, onCancel, onSave, testId }: EditSheetProps) {
   const [draft, setDraft] = useState(value)
   const [confirming, setConfirming] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -26,24 +27,34 @@ export function EditSheet({ label, value, onCancel, onSave }: EditSheetProps) {
   }
 
   return (
-    <div className="overlay">
+    <div className="overlay" data-testid={testId}>
       <div className="sheet">
         <h2>{label} bewerken</h2>
         <textarea
+          data-testid={`${testId}-input`}
           rows={4}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           disabled={confirming || saving}
         />
-        {error && <div className="notice">{error}</div>}
+        {error && (
+          <div className="notice" data-testid={`${testId}-error`}>
+            {error}
+          </div>
+        )}
         {confirming ? (
           <>
             <div className="notice">Deze wijziging opslaan?</div>
             <div className="actions">
-              <button onClick={() => setConfirming(false)} disabled={saving}>
+              <button data-testid={`${testId}-back`} onClick={() => setConfirming(false)} disabled={saving}>
                 Terug
               </button>
-              <button className="primary" onClick={handleConfirm} disabled={saving}>
+              <button
+                data-testid={`${testId}-confirm`}
+                className="primary"
+                onClick={handleConfirm}
+                disabled={saving}
+              >
                 {saving ? 'Bezig…' : 'Bevestigen'}
               </button>
             </div>
@@ -52,8 +63,10 @@ export function EditSheet({ label, value, onCancel, onSave }: EditSheetProps) {
           <>
             <div className="notice">Na opslaan vervangt dit de huidige informatie.</div>
             <div className="actions">
-              <button onClick={onCancel}>Annuleren</button>
-              <button className="primary" onClick={() => setConfirming(true)}>
+              <button data-testid={`${testId}-cancel`} onClick={onCancel}>
+                Annuleren
+              </button>
+              <button data-testid={`${testId}-save`} className="primary" onClick={() => setConfirming(true)}>
                 Opslaan
               </button>
             </div>

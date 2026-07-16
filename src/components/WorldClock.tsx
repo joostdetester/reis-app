@@ -10,14 +10,14 @@ export function WorldClock() {
   }, [])
 
   return (
-    <div className="world-clock">
+    <div className="world-clock" data-testid="world-clock">
       <div>
         <span className="kicker">🇵🇭 Filipijnen</span>
-        <b>{formatTimeInZone(now, 'Asia/Manila')}</b>
+        <b data-testid="world-clock-manila">{formatTimeInZone(now, 'Asia/Manila')}</b>
       </div>
       <div>
         <span className="kicker">🇳🇱 Nederland</span>
-        <b>{formatTimeInZone(now, 'Europe/Amsterdam')}</b>
+        <b data-testid="world-clock-amsterdam">{formatTimeInZone(now, 'Europe/Amsterdam')}</b>
       </div>
     </div>
   )

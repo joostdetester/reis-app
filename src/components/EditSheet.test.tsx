@@ -6,7 +6,7 @@ describe('EditSheet', () => {
   it('roept onCancel aan en slaat niets op bij annuleren', () => {
     const onSave = vi.fn()
     const onCancel = vi.fn()
-    render(<EditSheet label="Notitie" value="oud" onCancel={onCancel} onSave={onSave} />)
+    render(<EditSheet label="Notitie" value="oud" onCancel={onCancel} onSave={onSave} testId="test-sheet" />)
 
     fireEvent.click(screen.getByText('Annuleren'))
 
@@ -16,7 +16,7 @@ describe('EditSheet', () => {
 
   it('vraagt eerst bevestiging voordat onSave wordt aangeroepen', () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
-    render(<EditSheet label="Notitie" value="oud" onCancel={vi.fn()} onSave={onSave} />)
+    render(<EditSheet label="Notitie" value="oud" onCancel={vi.fn()} onSave={onSave} testId="test-sheet" />)
 
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'nieuw' } })
     fireEvent.click(screen.getByText('Opslaan'))
@@ -28,7 +28,7 @@ describe('EditSheet', () => {
 
   it('roept onSave pas aan na bevestigen', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
-    render(<EditSheet label="Notitie" value="oud" onCancel={vi.fn()} onSave={onSave} />)
+    render(<EditSheet label="Notitie" value="oud" onCancel={vi.fn()} onSave={onSave} testId="test-sheet" />)
 
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'nieuw' } })
     fireEvent.click(screen.getByText('Opslaan'))

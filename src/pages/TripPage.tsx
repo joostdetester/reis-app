@@ -57,9 +57,14 @@ const VIEWS: { id: TripView; label: string }[] = [
 
 function Toolbar({ view, onChange }: { view: TripView; onChange: (v: TripView) => void }) {
   return (
-    <div className="toolbar">
+    <div className="toolbar" data-testid="trip-view-toolbar">
       {VIEWS.map((v) => (
-        <button key={v.id} className={`chip ${view === v.id ? 'active' : ''}`} onClick={() => onChange(v.id)}>
+        <button
+          key={v.id}
+          className={`chip ${view === v.id ? 'active' : ''}`}
+          onClick={() => onChange(v.id)}
+          data-testid={`trip-view-${v.id}`}
+        >
           {v.label}
         </button>
       ))}
@@ -112,9 +117,13 @@ function TimelineView({
         placeholder="Zoek in alle reisgegevens…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        data-testid="trip-search"
       />
       {filtered.map((d) => (
-        <div key={d.id} ref={(el) => void (el ? cardRefs.current.set(d.travel_date, el) : cardRefs.current.delete(d.travel_date))}>
+        <div
+          key={d.id}
+          ref={(el) => void (el ? cardRefs.current.set(d.travel_date, el) : cardRefs.current.delete(d.travel_date))}
+        >
           <DayCard
             day={d}
             transportItems={transportItems}
@@ -272,7 +281,7 @@ function DestinationsView({
         const getYourGuideUrl = `https://www.getyourguide.com/s/?q=${encodeURIComponent(block.name)}`
 
         return (
-          <div className="list-card" key={`${block.name}-${index}`}>
+          <div className="list-card" key={`${block.name}-${index}`} data-testid={`destination-block-${index}`}>
             {destination?.photo_url && (
               <>
                 <img
@@ -339,7 +348,7 @@ function CalendarView({ days }: { days: TripDay[] }) {
   return (
     <div className="calendar-grid">
       {days.map((d) => (
-        <Link key={d.id} to={`/trip?view=timeline&day=${d.travel_date}`}>
+        <Link key={d.id} to={`/trip?view=timeline&day=${d.travel_date}`} data-testid={`calendar-day-${d.travel_date}`}>
           <b>{shortDate(d.travel_date)}</b>
           {d.location.split('→')[0]}
         </Link>
@@ -357,14 +366,14 @@ export function TripPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const view = (searchParams.get('view') as TripView) || 'timeline'
 
-  if (loading) return <div className="linear-trip"><div className="notice">Laden…</div></div>
-  if (error) return <div className="linear-trip"><div className="notice">{error}</div></div>
+  if (loading) return <div className="linear-trip" data-testid="page-trip"><div className="notice">Laden…</div></div>
+  if (error) return <div className="linear-trip" data-testid="page-trip"><div className="notice">{error}</div></div>
 
   const accommodationByDay = buildDayAccommodationMap(days, links, accommodations)
   const lastDiveByDayId = new Map(computeLastDiveInfo(days, destinations, transportItems).map((i) => [i.lastDayId, i.text]))
 
   return (
-    <div className="linear-trip">
+    <div className="linear-trip" data-testid="page-trip">
       <Toolbar view={view} onChange={(v) => setSearchParams({ view: v })} />
       {view === 'timeline' && (
         <TimelineView

@@ -18,6 +18,7 @@ interface FieldRowProps {
 /** Eén bewerkbaar veld: icoon, label, waarde en een "Bewerk"-knop die het bevestigingssheet opent. */
 export function FieldRow({ icon, label, value, table, id, field, placeholder = '-', href }: FieldRowProps) {
   const [editing, setEditing] = useState(false)
+  const testId = `field-${table}-${field}-${id}`
 
   async function handleSave(newValue: string) {
     await saveEdit(table, id, { [field]: newValue || null })
@@ -25,11 +26,11 @@ export function FieldRow({ icon, label, value, table, id, field, placeholder = '
   }
 
   return (
-    <div className="row">
+    <div className="row" data-testid={testId}>
       <div>{icon}</div>
       <div>
         <div className="kicker">{label}</div>
-        <div className="value">
+        <div className="value" data-testid={`${testId}-value`}>
           {value && href ? (
             <a target="_blank" rel="noreferrer" href={href}>
               {value}
@@ -39,9 +40,15 @@ export function FieldRow({ icon, label, value, table, id, field, placeholder = '
           )}
         </div>
       </div>
-      <EditButton onClick={() => setEditing(true)} />
+      <EditButton onClick={() => setEditing(true)} testId={`${testId}-edit`} />
       {editing && (
-        <EditSheet label={label} value={value ?? ''} onCancel={() => setEditing(false)} onSave={handleSave} />
+        <EditSheet
+          label={label}
+          value={value ?? ''}
+          onCancel={() => setEditing(false)}
+          onSave={handleSave}
+          testId={`${testId}-sheet`}
+        />
       )}
     </div>
   )

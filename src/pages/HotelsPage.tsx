@@ -39,7 +39,7 @@ export function HotelsPage() {
     .sort((a, b) => (a.stayDays[0]?.sort_order ?? Infinity) - (b.stayDays[0]?.sort_order ?? Infinity))
 
   return (
-    <>
+    <div data-testid="page-hotels">
       <h2 className="section-title">Overnachtingen</h2>
       <div className="grid cols">
         {withStayDays.map(({ acc, stayDays }) => {
@@ -51,10 +51,11 @@ export function HotelsPage() {
               className={`list-card ${acc.id === targetId ? 'highlighted' : ''}`}
               key={acc.id}
               ref={(el) => void (el ? cardRefs.current.set(acc.id, el) : cardRefs.current.delete(acc.id))}
+              data-testid={`hotel-card-${acc.id}`}
             >
               <h3>{acc.name}</h3>
               {stayDays.length > 0 && (
-                <div className="muted">
+                <div className="muted" data-testid={`hotel-stay-dates-${acc.id}`}>
                   {stayDays[0].location} · Verblijf:{' '}
                   {acc.check_in && acc.check_out
                     ? `${fmtPhilippineDate(acc.check_in)} t/m ${fmtPhilippineDate(acc.check_out)}`
@@ -62,7 +63,7 @@ export function HotelsPage() {
                 </div>
               )}
               {(acc.check_in || acc.check_out) && (
-                <p className="muted">
+                <p className="muted" data-testid={`hotel-checkinout-${acc.id}`}>
                   {acc.check_in && `Inchecken: ${fmtPhilippineTime(acc.check_in)}`}
                   {acc.check_in && acc.check_out ? ' · ' : ''}
                   {acc.check_out && `Uitchecken: ${fmtPhilippineTime(acc.check_out)}`}
@@ -78,17 +79,17 @@ export function HotelsPage() {
                 id={acc.id}
                 field="booking_reference"
               />
-              <a target="_blank" rel="noreferrer" href={mapsUrl}>
+              <a target="_blank" rel="noreferrer" href={mapsUrl} data-testid={`hotel-maps-link-${acc.id}`}>
                 Open in Google Maps
               </a>
               <br />
-              <a target="_blank" rel="noreferrer" href={bookingUrl}>
+              <a target="_blank" rel="noreferrer" href={bookingUrl} data-testid={`hotel-booking-link-${acc.id}`}>
                 Bekijk op Booking.com
               </a>
             </div>
           )
         })}
       </div>
-    </>
+    </div>
   )
 }

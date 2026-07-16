@@ -47,28 +47,47 @@ function PhotoThumbnail({ photo, onOpen }: { photo: DayPhoto; onOpen: () => void
   }
 
   return (
-    <div className="photo-thumb">
-      <img src={dayPhotoUrl(photo.storage_path)} alt="" loading="lazy" onClick={onOpen} />
+    <div className="photo-thumb" data-testid={`photo-thumb-${photo.id}`}>
+      <img
+        src={dayPhotoUrl(photo.storage_path)}
+        alt=""
+        loading="lazy"
+        onClick={onOpen}
+        data-testid={`photo-thumb-${photo.id}-image`}
+      />
       {hasEditAccess() &&
         (confirming ? (
           <div className="photo-thumb-confirm">
             {error ? (
-              <button onClick={reset} aria-label={error}>
+              <button onClick={reset} aria-label={error} data-testid={`photo-thumb-${photo.id}-error`}>
                 ⚠️
               </button>
             ) : (
               <>
-                <button onClick={() => void handleDelete()} disabled={deleting}>
+                <button
+                  onClick={() => void handleDelete()}
+                  disabled={deleting}
+                  data-testid={`photo-thumb-${photo.id}-delete-confirm`}
+                >
                   {deleting ? '…' : 'Ja'}
                 </button>
-                <button onClick={reset} disabled={deleting}>
+                <button
+                  onClick={reset}
+                  disabled={deleting}
+                  data-testid={`photo-thumb-${photo.id}-delete-cancel`}
+                >
                   Nee
                 </button>
               </>
             )}
           </div>
         ) : (
-          <button className="photo-thumb-delete" onClick={() => setConfirming(true)} aria-label="Foto verwijderen">
+          <button
+            className="photo-thumb-delete"
+            onClick={() => setConfirming(true)}
+            aria-label="Foto verwijderen"
+            data-testid={`photo-thumb-${photo.id}-delete`}
+          >
             ×
           </button>
         ))}
@@ -178,7 +197,7 @@ function DayPhotosCard({
   }
 
   return (
-    <div className="list-card">
+    <div className="list-card" data-testid={`day-photos-${day.id}`}>
       <h3>{fmtDate(day.travel_date)}</h3>
       <div className="muted">{day.location}</div>
       {photos.length > 0 ? (
@@ -193,24 +212,38 @@ function DayPhotosCard({
       {hasEditAccess() && (
         <>
           {session ? (
-            <button className="chip" onClick={handleOpenPicker} disabled={busy}>
+            <button className="chip" onClick={handleOpenPicker} disabled={busy} data-testid={`day-photos-${day.id}-add`}>
               ➡️ Open keuzescherm
             </button>
           ) : accessToken ? (
-            <button className="chip" onClick={() => void handleQuickOpen()} disabled={busy}>
+            <button
+              className="chip"
+              onClick={() => void handleQuickOpen()}
+              disabled={busy}
+              data-testid={`day-photos-${day.id}-add`}
+            >
               ➡️ Open keuzescherm
             </button>
           ) : (
-            <button className="chip" onClick={() => void handlePrepare()} disabled={busy}>
+            <button
+              className="chip"
+              onClick={() => void handlePrepare()}
+              disabled={busy}
+              data-testid={`day-photos-${day.id}-add`}
+            >
               📷 Foto's kiezen uit Google Photos
             </button>
           )}
           {status && (
-            <div className="muted" style={{ marginTop: 8 }}>
+            <div className="muted" style={{ marginTop: 8 }} data-testid={`day-photos-${day.id}-status`}>
               {status}
             </div>
           )}
-          {error && <div className="notice">{error}</div>}
+          {error && (
+            <div className="notice" data-testid={`day-photos-${day.id}-error`}>
+              {error}
+            </div>
+          )}
         </>
       )}
     </div>
@@ -340,13 +373,17 @@ function Lightbox({
   }
 
   return (
-    <div className="lightbox" onClick={onClose}>
+    <div className="lightbox" onClick={onClose} data-testid="lightbox">
       <div className="lightbox-header" onClick={(e) => e.stopPropagation()}>
         <div>
-          <div className="lightbox-date">{fmtDate(entry.day.travel_date)}</div>
-          <div className="lightbox-location">{entry.day.location}</div>
+          <div className="lightbox-date" data-testid="lightbox-date">
+            {fmtDate(entry.day.travel_date)}
+          </div>
+          <div className="lightbox-location" data-testid="lightbox-location">
+            {entry.day.location}
+          </div>
         </div>
-        <button className="lightbox-close" onClick={onClose} aria-label="Sluiten">
+        <button className="lightbox-close" onClick={onClose} aria-label="Sluiten" data-testid="lightbox-close">
           ×
         </button>
       </div>
@@ -359,7 +396,12 @@ function Lightbox({
         onTouchEnd={handleTouchEnd}
       >
         {index > 0 && scale === MIN_SCALE && (
-          <button className="lightbox-nav lightbox-prev" onClick={goPrev} aria-label="Vorige foto">
+          <button
+            className="lightbox-nav lightbox-prev"
+            onClick={goPrev}
+            aria-label="Vorige foto"
+            data-testid="lightbox-prev"
+          >
             ‹
           </button>
         )}
@@ -368,9 +410,15 @@ function Lightbox({
           src={dayPhotoUrl(entry.photo.storage_path)}
           alt=""
           style={{ transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})` }}
+          data-testid="lightbox-image"
         />
         {index < entries.length - 1 && scale === MIN_SCALE && (
-          <button className="lightbox-nav lightbox-next" onClick={goNext} aria-label="Volgende foto">
+          <button
+            className="lightbox-nav lightbox-next"
+            onClick={goNext}
+            aria-label="Volgende foto"
+            data-testid="lightbox-next"
+          >
             ›
           </button>
         )}
@@ -414,7 +462,7 @@ export function PhotosPage() {
   }
 
   return (
-    <>
+    <div data-testid="page-photos">
       <h2 className="section-title">Foto's</h2>
       <div className="grid">
         {days.map((day) => (
@@ -431,6 +479,6 @@ export function PhotosPage() {
       {openIndex !== null && (
         <Lightbox entries={entries} index={openIndex} onClose={() => setOpenIndex(null)} onNavigate={setOpenIndex} />
       )}
-    </>
+    </div>
   )
 }

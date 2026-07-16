@@ -10,18 +10,18 @@ export function PracticalPage() {
   if (error) return <div className="notice">{error}</div>
 
   return (
-    <>
+    <div data-testid="page-practical">
       <h2 className="section-title">Praktische informatie</h2>
       <div className="grid">
         <WeatherForecast />
         <CurrencyConverter />
         {info.map((item) => (
-          <div className="list-card" key={item.id}>
+          <div className="list-card" key={item.id} data-testid={`practical-info-${item.id}`}>
             <h3>{item.title}</h3>
             <FieldRow icon="ℹ️" label={item.title} value={item.content} table="practical_info" id={item.id} field="content" />
           </div>
         ))}
       </div>
-    </>
+    </div>
   )
 }

@@ -9,9 +9,14 @@ const ITEMS = [
 
 export function BottomNav() {
   return (
-    <nav className="bottom-nav">
+    <nav className="bottom-nav" data-testid="bottom-nav">
       {ITEMS.map((item) => (
-        <NavLink key={item.to} to={item.to} className={({ isActive }) => (isActive ? 'active' : '')}>
+        <NavLink
+          key={item.to}
+          to={item.to}
+          className={({ isActive }) => (isActive ? 'active' : '')}
+          data-testid={`bottom-nav-${item.to.slice(1)}`}
+        >
           <span>{item.icon}</span>
           {item.label}
         </NavLink>

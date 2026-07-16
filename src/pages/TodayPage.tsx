@@ -21,7 +21,7 @@ export function TodayPage() {
   const accommodationByDay = buildDayAccommodationMap(days, links, accommodations)
 
   return (
-    <>
+    <div data-testid="page-today">
       <Countdown />
       <div className="notice">
         Tijdens de reis opent de app automatisch op vandaag en morgen, zodat de hele familie direct ziet wat er op de planning staat.
@@ -34,6 +34,6 @@ export function TodayPage() {
           accommodationInfo={accommodationByDay.get(day.id)}
         />
       ))}
-    </>
+    </div>
   )
 }

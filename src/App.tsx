@@ -28,43 +28,56 @@ function Hero({
   loginError: string | null
 }) {
   return (
-    <header className="hero">
+    <header className="hero" data-testid="hero">
       <div className="hero-content">
         <small>
           Gezinsreis
-          {!hasEditAccess() && <span className="readonly-badge">Alleen-lezen</span>}
           {!hasEditAccess() && (
-            <button className="google-login-link" onClick={onGoogleLogin} disabled={loggingIn}>
+            <span className="readonly-badge" data-testid="readonly-badge">
+              Alleen-lezen
+            </span>
+          )}
+          {!hasEditAccess() && (
+            <button
+              className="google-login-link"
+              onClick={onGoogleLogin}
+              disabled={loggingIn}
+              data-testid="google-login-button"
+            >
               {loggingIn ? 'Bezig…' : '🔐 Inloggen'}
             </button>
           )}
           {hasEditAccess() && (
-            <button className="logout-link" onClick={onRequestLogout}>
+            <button className="logout-link" onClick={onRequestLogout} data-testid="logout-button">
               Uitloggen
             </button>
           )}
         </small>
-        {!hasEditAccess() && loginError && <div className="notice google-login-notice">{loginError}</div>}
+        {!hasEditAccess() && loginError && (
+          <div className="notice google-login-notice" data-testid="google-login-error">
+            {loginError}
+          </div>
+        )}
         <h1>Filipijnen 2026</h1>
         <p>23 juli – 13 augustus · 22 dagen</p>
         <WorldClock />
         <div className="top-actions">
-          <Link className="secondary" to="/trip?view=timeline">
+          <Link className="secondary" to="/trip?view=timeline" data-testid="menu-timeline">
             📜 Tijdlijn
           </Link>
-          <Link className="secondary" to="/trip?view=destinations">
+          <Link className="secondary" to="/trip?view=destinations" data-testid="menu-destinations">
             🏝️ Bestemmingen
           </Link>
-          <Link className="secondary" to="/trip?view=calendar">
+          <Link className="secondary" to="/trip?view=calendar" data-testid="menu-calendar">
             📅 Kalender
           </Link>
-          <button className="secondary" onClick={onOpenRouteMap}>
+          <button className="secondary" onClick={onOpenRouteMap} data-testid="menu-route-map">
             🗺️ Reisroute
           </button>
-          <Link className="secondary" to="/photos">
+          <Link className="secondary" to="/photos" data-testid="menu-photos">
             📷 Foto's
           </Link>
-          <Link className="secondary" to="/practical">
+          <Link className="secondary" to="/practical" data-testid="menu-practical">
             ☰ Praktisch
           </Link>
         </div>
@@ -121,7 +134,7 @@ function App() {
         loggingIn={loggingIn}
         loginError={loginError}
       />
-      <main>
+      <main data-testid="main-content">
         <Routes>
           <Route path="/" element={<Navigate to="/today" replace />} />
           <Route path="/today" element={<TodayPage />} />
@@ -134,12 +147,12 @@ function App() {
       </main>
       <BottomNav />
       {showRouteMap && (
-        <div className="overlay" onClick={() => setShowRouteMap(false)}>
+        <div className="overlay" onClick={() => setShowRouteMap(false)} data-testid="route-map-overlay">
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
             <h2>Reisroute</h2>
             <RouteMap />
             <div className="actions">
-              <button className="primary" onClick={() => setShowRouteMap(false)}>
+              <button className="primary" onClick={() => setShowRouteMap(false)} data-testid="route-map-close">
                 Sluiten
               </button>
             </div>
@@ -147,7 +160,7 @@ function App() {
         </div>
       )}
       {confirmingLogout && (
-        <div className="overlay" onClick={() => setConfirmingLogout(false)}>
+        <div className="overlay" onClick={() => setConfirmingLogout(false)} data-testid="logout-confirm-overlay">
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
             <h2>Uitloggen</h2>
             <div className="notice">
@@ -155,8 +168,10 @@ function App() {
               ?token=...) weer nodig om opnieuw bewerktoegang te krijgen.
             </div>
             <div className="actions">
-              <button onClick={() => setConfirmingLogout(false)}>Annuleren</button>
-              <button className="primary" onClick={handleLogout}>
+              <button onClick={() => setConfirmingLogout(false)} data-testid="logout-confirm-cancel">
+                Annuleren
+              </button>
+              <button className="primary" onClick={handleLogout} data-testid="logout-confirm-confirm">
                 Uitloggen
               </button>
             </div>

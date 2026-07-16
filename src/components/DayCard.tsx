@@ -39,13 +39,22 @@ function TransportLine({ item }: { item: TransportItem }) {
 
   if (isFlight(item)) {
     return (
-      <Link className="day-transport" to={`/transport?item=${item.id}`} onClick={(e) => e.stopPropagation()}>
+      <Link
+        className="day-transport"
+        to={`/transport?item=${item.id}`}
+        onClick={(e) => e.stopPropagation()}
+        data-testid={`day-card-transport-${item.id}`}
+      >
         {text}
       </Link>
     )
   }
 
-  return <div className="day-transport">{text}</div>
+  return (
+    <div className="day-transport" data-testid={`day-card-transport-${item.id}`}>
+      {text}
+    </div>
+  )
 }
 
 function HotelLine({ info }: { info: DayAccommodationInfo }) {
@@ -55,7 +64,12 @@ function HotelLine({ info }: { info: DayAccommodationInfo }) {
   if (isCheckOut && accommodation.check_out) parts.push(`uitchecken ${fmtPhilippineTime(accommodation.check_out)}`)
 
   return (
-    <Link className="day-hotel" to={`/hotels?item=${accommodation.id}`} onClick={(e) => e.stopPropagation()}>
+    <Link
+      className="day-hotel"
+      to={`/hotels?item=${accommodation.id}`}
+      onClick={(e) => e.stopPropagation()}
+      data-testid="day-card-hotel"
+    >
       🏨 {parts.join(' · ')}
     </Link>
   )
@@ -87,7 +101,7 @@ export function DayCard({
   }
 
   return (
-    <article className={`day-card ${isCollapsed ? 'collapsed' : ''}`}>
+    <article className={`day-card ${isCollapsed ? 'collapsed' : ''}`} data-testid={`day-card-${day.id}`}>
       <div
         className="day-head"
         role="button"
@@ -100,10 +114,15 @@ export function DayCard({
             setIsCollapsed((c) => !c)
           }
         }}
+        data-testid={`day-card-${day.id}-head`}
       >
         <div>
-          <div className="day-title">{day.location}</div>
-          <div className="day-date">{fmtDate(day.travel_date)}</div>
+          <div className="day-title" data-testid={`day-card-${day.id}-location`}>
+            {day.location}
+          </div>
+          <div className="day-date" data-testid={`day-card-${day.id}-date`}>
+            {fmtDate(day.travel_date)}
+          </div>
           <DayWeather location={day.location} date={day.travel_date} />
           {accommodationInfo && <HotelLine info={accommodationInfo} />}
           {dayTransport.map((item) => (
@@ -111,21 +130,29 @@ export function DayCard({
           ))}
           {lastDiveNotice && <div className="day-notice">{lastDiveNotice}</div>}
         </div>
-        <span className={`badge ${day.day_type}`}>{day.day_type}</span>
+        <span className={`badge ${day.day_type}`} data-testid={`day-card-${day.id}-badge`}>
+          {day.day_type}
+        </span>
       </div>
       <div className="day-body">
         <div className="parts">
           {(['morning_text', 'afternoon_text', 'evening_text'] as const).map((field) => (
-            <div className="part" key={field}>
+            <div className="part" key={field} data-testid={`day-part-${field}-${day.id}`}>
               <div className="kicker">{PART_LABELS[field]}</div>
-              <b>{day[field] ?? 'Nog in te vullen'}</b>
-              <EditButton onClick={() => setEditingPart(field)} />
+              <b data-testid={`day-part-${field}-${day.id}-value`}>{day[field] ?? 'Nog in te vullen'}</b>
+              <EditButton onClick={() => setEditingPart(field)} testId={`day-part-${field}-${day.id}-edit`} />
             </div>
           ))}
         </div>
         <FieldRow icon="📝" label="Notitie" value={day.notes} table="trip_days" id={day.id} field="notes" placeholder="Geen notitie" />
         {showMapLink && (
-          <a className="map-link" href={mapsUrl} target="_blank" rel="noreferrer">
+          <a
+            className="map-link"
+            href={mapsUrl}
+            target="_blank"
+            rel="noreferrer"
+            data-testid={`day-card-${day.id}-map-link`}
+          >
             <span>📍 Open locatie in Google Maps</span>
             <span>›</span>
           </a>
@@ -138,6 +165,7 @@ export function DayCard({
           value={day[editingPart] ?? ''}
           onCancel={() => setEditingPart(null)}
           onSave={(value) => handleSavePart(editingPart, value)}
+          testId={`day-part-${editingPart}-${day.id}-sheet`}
         />
       )}
     </article>

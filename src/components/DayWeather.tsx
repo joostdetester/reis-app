@@ -10,7 +10,7 @@ export function DayWeather({ location, date }: { location: string; date: string 
   const beach = beachScore(forecast)
 
   return (
-    <div className="muted day-weather" style={{ fontSize: 12 }}>
+    <div className="muted day-weather" style={{ fontSize: 12 }} data-testid="day-weather">
       {info.emoji} {Math.round(forecast.tempMax)}° / {Math.round(forecast.tempMin)}° · 🏖️ {beach.score}/10
     </div>
   )

@@ -28,10 +28,15 @@ export function WeatherForecast({ days = 14 }: { days?: number }) {
   }
 
   return (
-    <div className="list-card">
+    <div className="list-card" data-testid="weather-forecast">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <h3 style={{ margin: 0 }}>Weer</h3>
-        <select className="select-pill" value={destination} onChange={(e) => handleChange(e.target.value)}>
+        <select
+          className="select-pill"
+          value={destination}
+          onChange={(e) => handleChange(e.target.value)}
+          data-testid="weather-forecast-destination"
+        >
           {WEATHER_DESTINATIONS.map((name) => (
             <option key={name} value={name}>
               {name}
@@ -51,7 +56,11 @@ export function WeatherForecast({ days = 14 }: { days?: number }) {
               const info = weatherCodeInfo(day.weatherCode)
               const beach = beachScore(day)
               return (
-                <div key={day.date} style={{ textAlign: 'center', fontSize: 12, flex: '0 0 auto', minWidth: 58 }}>
+                <div
+                  key={day.date}
+                  style={{ textAlign: 'center', fontSize: 12, flex: '0 0 auto', minWidth: 58 }}
+                  data-testid={`weather-forecast-day-${day.date}`}
+                >
                   <div className="muted">{shortDate(day.date)}</div>
                   <div style={{ fontSize: 20 }}>{info.emoji}</div>
                   <div>

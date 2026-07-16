@@ -50,7 +50,7 @@ export function CurrencyConverter() {
   const displayedEur = lastEdited === 'php' ? (phpAmount !== null ? (phpAmount / rate.phpPerEur).toFixed(2) : '') : eurRaw
 
   return (
-    <div className="list-card">
+    <div className="list-card" data-testid="currency-converter">
       <h3>Peso ↔ Euro</h3>
       <div className="row">
         <div>₱</div>
@@ -65,6 +65,7 @@ export function CurrencyConverter() {
               setLastEdited('php')
               setPhpRaw(e.target.value)
             }}
+            data-testid="currency-converter-php"
           />
         </div>
       </div>
@@ -81,10 +82,11 @@ export function CurrencyConverter() {
               setLastEdited('eur')
               setEurRaw(e.target.value)
             }}
+            data-testid="currency-converter-eur"
           />
         </div>
       </div>
-      <p className="muted" style={{ marginTop: 8 }}>
+      <p className="muted" style={{ marginTop: 8 }} data-testid="currency-converter-rate">
         Koers: 1 EUR ≈ {rate.phpPerEur.toFixed(2)} PHP
         {rate.isLive ? ` (actueel, ${rate.date})` : ' (indicatief, kon actuele koers niet ophalen)'}
       </p>

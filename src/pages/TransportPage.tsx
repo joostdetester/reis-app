@@ -51,6 +51,8 @@ function FlightTimeField({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const testId = `flight-time-${field}-${item.id}`
+
   function openEditor() {
     setDraft(currentIso ? toDatetimeLocalValue(currentIso, zone) : '')
     setError(null)
@@ -79,18 +81,18 @@ function FlightTimeField({
   }
 
   return (
-    <div className="row">
+    <div className="row" data-testid={testId}>
       <div>{icon}</div>
       <div>
         <div className="kicker">{label}</div>
-        <div className="value">
+        <div className="value" data-testid={`${testId}-value`}>
           {currentIso ? fmtLocalDateTime(currentIso, zone) : '-'}
           {currentIso && cityName ? ` (${cityName})` : ''}
         </div>
       </div>
-      <EditButton onClick={openEditor} />
+      <EditButton onClick={openEditor} testId={`${testId}-edit`} />
       {editing && (
-        <div className="overlay">
+        <div className="overlay" data-testid={`${testId}-sheet`}>
           <div className="sheet">
             <h2>{label} bewerken</h2>
             <input
@@ -98,16 +100,26 @@ function FlightTimeField({
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               disabled={confirming || saving}
+              data-testid={`${testId}-input`}
             />
-            {error && <div className="notice">{error}</div>}
+            {error && (
+              <div className="notice" data-testid={`${testId}-error`}>
+                {error}
+              </div>
+            )}
             {confirming ? (
               <>
                 <div className="notice">Deze wijziging opslaan?</div>
                 <div className="actions">
-                  <button onClick={() => setConfirming(false)} disabled={saving}>
+                  <button data-testid={`${testId}-back`} onClick={() => setConfirming(false)} disabled={saving}>
                     Terug
                   </button>
-                  <button className="primary" onClick={handleConfirm} disabled={saving}>
+                  <button
+                    data-testid={`${testId}-confirm`}
+                    className="primary"
+                    onClick={handleConfirm}
+                    disabled={saving}
+                  >
                     {saving ? 'Bezig…' : 'Bevestigen'}
                   </button>
                 </div>
@@ -116,8 +128,10 @@ function FlightTimeField({
               <>
                 <div className="notice">Na opslaan vervangt dit de huidige informatie.</div>
                 <div className="actions">
-                  <button onClick={() => setEditing(false)}>Annuleren</button>
-                  <button className="primary" onClick={() => setConfirming(true)}>
+                  <button data-testid={`${testId}-cancel`} onClick={() => setEditing(false)}>
+                    Annuleren
+                  </button>
+                  <button data-testid={`${testId}-save`} className="primary" onClick={() => setConfirming(true)}>
                     Opslaan
                   </button>
                 </div>
@@ -146,10 +160,14 @@ function ScheduleChangedNotice({ item }: { item: TransportItem }) {
   }
 
   return (
-    <div className="notice">
+    <div className="notice" data-testid={`schedule-changed-notice-${item.id}`}>
       ⚠️ Let op: de vluchttijden zijn gewijzigd.
       {hasEditAccess() && (
-        <button onClick={() => void handleDismiss()} disabled={dismissing}>
+        <button
+          onClick={() => void handleDismiss()}
+          disabled={dismissing}
+          data-testid={`schedule-changed-dismiss-${item.id}`}
+        >
           {dismissing ? 'Bezig…' : 'Gezien'}
         </button>
       )}
@@ -213,7 +231,7 @@ function FlightStatusField({ item, apiEnabled }: { item: TransportItem; apiEnabl
   const resultByCode = new Map((results ?? []).map((r) => [r.flightNumber, r]))
 
   return (
-    <div className="row">
+    <div className="row" data-testid={`flight-status-${item.id}`}>
       <div>📡</div>
       <div>
         <div className="kicker">Vluchtstatus</div>
@@ -228,7 +246,12 @@ function FlightStatusField({ item, apiEnabled }: { item: TransportItem; apiEnabl
                 return (
                   <span key={code}>
                     {i > 0 ? ' · ' : ''}
-                    <a target="_blank" rel="noreferrer" href={flightradar24Url(code)}>
+                    <a
+                      target="_blank"
+                      rel="noreferrer"
+                      href={flightradar24Url(code)}
+                      data-testid={`flight-status-link-${item.id}-${code}`}
+                    >
                       {suffix ? `${code}: ${suffix}` : code}
                     </a>
                   </span>
@@ -254,7 +277,7 @@ function FlightApiToggle({ trip }: { trip: Trip }) {
   }
 
   return (
-    <button className="chip" onClick={() => void toggle()} disabled={saving}>
+    <button className="chip" onClick={() => void toggle()} disabled={saving} data-testid="flight-api-toggle">
       📡 Vluchtstatus-API: {trip.flight_status_api_enabled ? 'Aan' : 'Uit'}
     </button>
   )
@@ -288,7 +311,7 @@ export function TransportPage() {
   const apiEnabled = trip?.flight_status_api_enabled ?? true
 
   return (
-    <>
+    <div data-testid="page-transport">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
         <h2 className="section-title">Vluchten</h2>
         {hasEditAccess() && trip && <FlightApiToggle trip={trip} />}
@@ -303,6 +326,7 @@ export function TransportPage() {
               className={`list-card ${item.id === targetId ? 'highlighted' : ''}`}
               key={item.id}
               ref={(el) => void (el ? cardRefs.current.set(item.id, el) : cardRefs.current.delete(item.id))}
+              data-testid={`flight-card-${item.id}`}
             >
               <h3>{day ? fmtDate(day.travel_date) : '-'}</h3>
               <div>{day?.location}</div>
@@ -313,7 +337,12 @@ export function TransportPage() {
                   <>
                     {' '}
                     (
-                    <a target="_blank" rel="noreferrer" href={flightMapUrl(item.origin, item.destination)!}>
+                    <a
+                      target="_blank"
+                      rel="noreferrer"
+                      href={flightMapUrl(item.origin, item.destination)!}
+                      data-testid={`flight-route-link-${item.id}`}
+                    >
                       route
                     </a>
                     )
@@ -360,11 +389,13 @@ export function TransportPage() {
                 cityName={cityLabel(item.destination)}
               />
               {item.departure_time && item.arrival_time && (
-                <div className="row">
+                <div className="row" data-testid={`flight-duration-${item.id}`}>
                   <div>⏳</div>
                   <div>
                     <div className="kicker">Vluchtduur</div>
-                    <div className="value">{formatDuration(item.departure_time, item.arrival_time)}</div>
+                    <div className="value" data-testid={`flight-duration-${item.id}-value`}>
+                      {formatDuration(item.departure_time, item.arrival_time)}
+                    </div>
                   </div>
                 </div>
               )}
@@ -405,6 +436,6 @@ export function TransportPage() {
           )
         })}
       </div>
-    </>
+    </div>
   )
 }

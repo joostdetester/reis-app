@@ -54,8 +54,22 @@ Zie `SECURITY.md` voor waarom schrijven alleen via de Edge Function loopt en lez
 ```powershell
 npm run build   # type-check + productiebuild
 npx vitest run
-npx playwright test
 ```
+
+Playwright end-to-end tests staan niet in deze repo, maar in het aparte reis-app-taf
+testautomatiseringsproject (Cucumber/BDD/POM/Allure).
+
+### data-testid's
+
+Interactieve en betekenisvolle elementen hebben een `data-testid` voor stabiele,
+taal-onafhankelijke selectors in end-to-end tests (los van CSS-classes of Nederlandse
+teksten, die kunnen wijzigen). Conventie: kebab-case, hiërarchisch opgebouwd van
+algemeen naar specifiek, met het domein-ID erin waar een lijst-item wordt geïdentificeerd,
+bv. `day-card-{dayId}`, `field-{table}-{field}-{id}`, `bottom-nav-trip`.
+
+Herbruikbare componenten (`EditButton`, `EditSheet`, `FieldRow`) nemen een `testId`-prop
+aan (of leiden die af uit `table`/`field`/`id`) zodat elke plek waar ze gebruikt worden een
+eigen unieke testid krijgt, ook als er meerdere op dezelfde pagina staan.
 
 ## Geheime link
 
