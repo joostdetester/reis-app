@@ -74,3 +74,22 @@ eigen unieke testid krijgt, ook als er meerdere op dezelfde pagina staan.
 ## Geheime link
 
 De app is bedoeld voor toegang via een link met een edit-token (`?token=...`), niet via een apart wachtwoord. Zie `SECURITY.md`.
+
+## Versienummer
+
+`package.json` bevat het huidige versienummer (semver). Bij elke `npm run build`
+schrijft `scripts/write-version.mjs` dat versienummer, samen met de git-commit
+en het build-tijdstip, naar `public/version.json` — een gegenereerd bestand
+(niet in git), dat na deploy publiek opvraagbaar is via `{BASE_URL}/version.json`.
+Het reis-app-taf testframework leest dit uit om te loggen tegen welke app-versie
+een testrun heeft gedraaid.
+
+Bump de versie handmatig zodra je een wijziging shipt die het waard is om in
+testrapportages te onderscheiden, vóór de commit die de wijziging bevat:
+
+```powershell
+npm version patch --no-git-tag-version   # of minor/major, zie semver.org
+```
+
+Dit is bewust een menselijke stap, geen automatische bump per commit — bij een
+gezinsapp met incidentele wijzigingen zou dat alleen ruis toevoegen.
