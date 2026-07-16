@@ -206,7 +206,6 @@ main{max-width:860px;margin:0 auto;padding:16px 16px 110px}
 .linear-trip .actions button{border:1px solid var(--lx-border);background:var(--lx-bg);color:var(--lx-text)}
 .linear-trip .actions button.primary{background:var(--lx-accent);border-color:var(--lx-accent);color:#fff}
 @media(min-width:700px){
-  main{padding-bottom:40px}
   .hero{border-radius:0 0 36px 36px}
   .top-actions{grid-template-columns:repeat(4,minmax(0,1fr));max-width:680px}
   .bottom-nav{left:50%;transform:translateX(-50%);max-width:620px;border-radius:999px}
