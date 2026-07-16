@@ -3,11 +3,10 @@
 // reis-app-taf testframework leest dit bestand uit om te loggen tegen welke
 // app-versie een testrun heeft gedraaid (zie ai/ in dat project).
 import { execFileSync } from 'node:child_process'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const rootDir = fileURLToPath(new URL('..', import.meta.url))
-const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
 
 function resolveCommit() {
   if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA
@@ -18,10 +17,19 @@ function resolveCommit() {
   }
 }
 
+// CalVer with a UTC time component, not package.json's static "1.0.0" - this
+// app can deploy more than once a day, and a date-only version would make
+// every same-day deploy look identical in the Allure Environment widget.
+function formatVersion(date) {
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${date.getUTCFullYear()}.${pad(date.getUTCMonth() + 1)}.${pad(date.getUTCDate())}-${pad(date.getUTCHours())}${pad(date.getUTCMinutes())}`
+}
+
+const builtAt = new Date()
 const version = {
-  version: pkg.version,
+  version: formatVersion(builtAt),
   commit: resolveCommit(),
-  builtAt: new Date().toISOString(),
+  builtAt: builtAt.toISOString(),
 }
 
 writeFileSync(new URL('../public/version.json', import.meta.url), JSON.stringify(version, null, 2) + '\n')
