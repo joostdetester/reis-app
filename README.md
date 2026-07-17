@@ -27,6 +27,7 @@ Zet eerst `.env.local` klaar (op basis van `.env.example`) met je Supabase-proje
 - `data.json` — oorspronkelijke reisdata, gebruikt door het eenmalige migratiescript
 - `supabase/schema.sql` — tabellen + Row Level Security
 - `supabase/functions/save-edit/` — de Edge Function waar alle schrijfacties doorheen lopen
+- `supabase/functions/verify-edit-token/` — read-only Edge Function die bepaalt of de UI Bewerk-knoppen mag tonen (zie SECURITY.md)
 - `supabase/seed_from_data_json.mjs` — eenmalig migratiescript van `data.json` naar Supabase
 - `supabase/seed_practical_info.mjs` — eenmalig seed-script voor de praktische-informatiepagina
 - `SECURITY.md` — onderbouwing van de beveiligingskeuzes (geheime link, edit-token, RLS)

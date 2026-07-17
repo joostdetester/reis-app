@@ -9,7 +9,8 @@ import { HotelsPage } from './pages/HotelsPage'
 import { TransportPage } from './pages/TransportPage'
 import { PhotosPage } from './pages/PhotosPage'
 import { PracticalPage } from './pages/PracticalPage'
-import { clearEditToken, hasEditAccess, setEditToken } from './lib/tripAccess'
+import { clearEditToken, setEditToken } from './lib/tripAccess'
+import { useHasEditAccess } from './lib/editAccessContext'
 import { GOOGLE_CLIENT_ID, requestGoogleSiteLoginToken } from './lib/googlePhotosAuth'
 import { setGoogleAccessToken as cacheGoogleAccessToken } from './lib/googleSession'
 import { loginWithGoogle } from './lib/loginWithGoogle'
@@ -27,17 +28,19 @@ function Hero({
   loggingIn: boolean
   loginError: string | null
 }) {
+  const hasAccess = useHasEditAccess()
+
   return (
     <header className="hero" data-testid="hero">
       <div className="hero-content">
         <small>
           Gezinsreis
-          {!hasEditAccess() && (
+          {!hasAccess && (
             <span className="readonly-badge" data-testid="readonly-badge">
               Alleen-lezen
             </span>
           )}
-          {!hasEditAccess() && (
+          {!hasAccess && (
             <button
               className="google-login-link"
               onClick={onGoogleLogin}
@@ -47,13 +50,13 @@ function Hero({
               {loggingIn ? 'Bezig…' : '🔐 Inloggen'}
             </button>
           )}
-          {hasEditAccess() && (
+          {hasAccess && (
             <button className="logout-link" onClick={onRequestLogout} data-testid="logout-button">
               Uitloggen
             </button>
           )}
         </small>
-        {!hasEditAccess() && loginError && (
+        {!hasAccess && loginError && (
           <div className="notice google-login-notice" data-testid="google-login-error">
             {loginError}
           </div>

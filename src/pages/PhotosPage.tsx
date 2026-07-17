@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTripDays } from '../hooks/useTripDays'
 import { useDayPhotos } from '../hooks/useDayPhotos'
-import { hasEditAccess } from '../lib/tripAccess'
+import { useHasEditAccess } from '../lib/editAccessContext'
 import { GOOGLE_CLIENT_ID, requestGooglePhotosAccessToken } from '../lib/googlePhotosAuth'
 import {
   getGoogleAccessToken,
@@ -28,6 +28,7 @@ function PhotoThumbnail({ photo, onOpen }: { photo: DayPhoto; onOpen: () => void
   const [confirming, setConfirming] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const hasAccess = useHasEditAccess()
 
   async function handleDelete() {
     setDeleting(true)
@@ -55,7 +56,7 @@ function PhotoThumbnail({ photo, onOpen }: { photo: DayPhoto; onOpen: () => void
         onClick={onOpen}
         data-testid={`photo-thumb-${photo.id}-image`}
       />
-      {hasEditAccess() &&
+      {hasAccess &&
         (confirming ? (
           <div className="photo-thumb-confirm">
             {error ? (
@@ -120,6 +121,7 @@ function DayPhotosCard({
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [session, setSession] = useState<PickerSession | null>(null)
+  const hasAccess = useHasEditAccess()
 
   async function handlePrepare() {
     if (!GOOGLE_CLIENT_ID) {
@@ -209,7 +211,7 @@ function DayPhotosCard({
       ) : (
         <p className="muted">Nog geen foto's voor deze dag.</p>
       )}
-      {hasEditAccess() && (
+      {hasAccess && (
         <>
           {session ? (
             <button className="chip" onClick={handleOpenPicker} disabled={busy} data-testid={`day-photos-${day.id}-add`}>

@@ -7,7 +7,7 @@ import { useFlightStatus } from '../hooks/useFlightStatus'
 import { FieldRow } from '../components/FieldRow'
 import { EditButton } from '../components/EditButton'
 import { saveEdit } from '../lib/saveEdit'
-import { hasEditAccess } from '../lib/tripAccess'
+import { useHasEditAccess } from '../lib/editAccessContext'
 import {
   cityLabel,
   flightStatusWindow,
@@ -147,6 +147,7 @@ function FlightTimeField({
 /** Waarschuwing dat de vluchttijden zijn gewijzigd, met een knop om te bevestigen dat het gezien is. */
 function ScheduleChangedNotice({ item }: { item: TransportItem }) {
   const [dismissing, setDismissing] = useState(false)
+  const hasAccess = useHasEditAccess()
 
   if (!item.schedule_changed) return null
 
@@ -162,7 +163,7 @@ function ScheduleChangedNotice({ item }: { item: TransportItem }) {
   return (
     <div className="notice" data-testid={`schedule-changed-notice-${item.id}`}>
       ⚠️ Let op: de vluchttijden zijn gewijzigd.
-      {hasEditAccess() && (
+      {hasAccess && (
         <button
           onClick={() => void handleDismiss()}
           disabled={dismissing}
@@ -287,6 +288,7 @@ export function TransportPage() {
   const { transportItems, loading: loadingItems, error: errorItems } = useTransportItems()
   const { days, loading: loadingDays, error: errorDays } = useTripDays()
   const { trip } = useTrip()
+  const hasAccess = useHasEditAccess()
   const [searchParams] = useSearchParams()
   const targetId = searchParams.get('item')
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
@@ -314,7 +316,7 @@ export function TransportPage() {
     <div data-testid="page-transport">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
         <h2 className="section-title">Vluchten</h2>
-        {hasEditAccess() && trip && <FlightApiToggle trip={trip} />}
+        {hasAccess && trip && <FlightApiToggle trip={trip} />}
       </div>
       <div className="grid">
         {sorted.map((item) => {
