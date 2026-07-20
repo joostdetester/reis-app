@@ -43,7 +43,6 @@ function TransportLine({ item }: { item: TransportItem }) {
       <Link
         className="day-transport"
         to={`/transport?item=${item.id}`}
-        onClick={(e) => e.stopPropagation()}
         data-testid={`day-card-transport-${item.id}`}
       >
         {text}
@@ -65,12 +64,7 @@ function HotelLine({ info }: { info: DayAccommodationInfo }) {
   if (isCheckOut && accommodation.check_out) parts.push(`uitchecken ${fmtPhilippineTime(accommodation.check_out)}`)
 
   return (
-    <Link
-      className="day-hotel"
-      to={`/hotels?item=${accommodation.id}`}
-      onClick={(e) => e.stopPropagation()}
-      data-testid="day-card-hotel"
-    >
+    <Link className="day-hotel" to={`/hotels?item=${accommodation.id}`} data-testid="day-card-hotel">
       🏨 {parts.join(' · ')}
     </Link>
   )
@@ -103,28 +97,22 @@ export function DayCard({
 
   return (
     <article className={`day-card ${isCollapsed ? 'collapsed' : ''}`} data-testid={`day-card-${day.id}`}>
-      <div
-        className="day-head"
-        role="button"
-        tabIndex={0}
-        aria-expanded={!isCollapsed}
-        onClick={() => setIsCollapsed((c) => !c)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            setIsCollapsed((c) => !c)
-          }
-        }}
-        data-testid={`day-card-${day.id}-head`}
-      >
-        <div>
-          <div className="day-title" data-testid={`day-card-${day.id}-location`}>
-            {day.location}
-          </div>
-          <div className="day-date" data-testid={`day-card-${day.id}-date`}>
-            {fmtDate(day.travel_date)}
-          </div>
-          <DayWeather location={day.location} date={day.travel_date} />
+      <div className="day-head" data-testid={`day-card-${day.id}-head`}>
+        <div className="day-head-content">
+          <button
+            type="button"
+            className="day-head-toggle"
+            aria-expanded={!isCollapsed}
+            onClick={() => setIsCollapsed((c) => !c)}
+          >
+            <div className="day-title" data-testid={`day-card-${day.id}-location`}>
+              {day.location}
+            </div>
+            <div className="day-date" data-testid={`day-card-${day.id}-date`}>
+              {fmtDate(day.travel_date)}
+            </div>
+            <DayWeather location={day.location} date={day.travel_date} />
+          </button>
           {accommodationInfo && <HotelLine info={accommodationInfo} />}
           {dayTransport.map((item) => (
             <TransportLine key={item.id} item={item} />

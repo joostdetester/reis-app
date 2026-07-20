@@ -36,6 +36,7 @@ export function WeatherForecast({ days = 14 }: { days?: number }) {
           value={destination}
           onChange={(e) => handleChange(e.target.value)}
           data-testid="weather-forecast-destination"
+          aria-label="Stad voor weersverwachting"
         >
           {WEATHER_DESTINATIONS.map((name) => (
             <option key={name} value={name}>

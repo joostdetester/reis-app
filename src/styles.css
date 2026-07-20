@@ -1,7 +1,7 @@
 
 :root{
   --ink:#14333d;
-  --muted:#64757f;
+  --muted:#47535c;
   --sea:#1d6f7d;
   --sea2:#4d9a7d;
   --sand:#f5e8d7;
@@ -101,9 +101,11 @@ main{max-width:860px;margin:0 auto;padding:16px 16px 110px}
 .lightbox-next{right:10px}
 .day-card{position:relative;background:var(--card);border:1px solid rgba(20,51,61,.08);border-radius:24px;margin:14px 0;overflow:hidden;box-shadow:0 20px 44px rgba(18,46,56,.08)}
 .day-card::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--gold),var(--sea),var(--sea2));opacity:.9}
-.day-head{display:flex;justify-content:space-between;gap:12px;padding:16px 16px 14px;background:linear-gradient(90deg, rgba(237,247,248,.85) 0%, rgba(255,252,246,.95) 100%);cursor:pointer;transition:background .15s ease,transform .12s ease}
-.day-head:active{transform:scale(.99);background:linear-gradient(90deg, rgba(234,246,247,.95) 0%, rgba(245,251,252,1) 100%)}
-.day-head:focus-visible{outline:2px solid var(--sea);outline-offset:-2px}
+.day-head{display:flex;justify-content:space-between;gap:12px;padding:16px 16px 14px;background:linear-gradient(90deg, rgba(237,247,248,.85) 0%, rgba(255,252,246,.95) 100%);transition:background .15s ease}
+.day-head-content{flex:1;min-width:0}
+.day-head-toggle{all:unset;display:block;width:100%;cursor:pointer;transition:transform .12s ease}
+.day-head-toggle:active{transform:scale(.99)}
+.day-head-toggle:focus-visible{outline:2px solid var(--sea);outline-offset:2px;border-radius:8px}
 .day-title{font-weight:900;font-size:1.04rem;line-height:1.25}
 .day-date{font-size:.84rem;color:var(--muted);margin-top:4px}
 .day-hotel,.day-transport{display:block;margin-top:7px;font-size:.9rem;font-weight:800;color:var(--sea);text-decoration:none}
@@ -166,7 +168,7 @@ main{max-width:860px;margin:0 auto;padding:16px 16px 110px}
   font-display:swap;
 }
 .linear-trip{
-  --lx-bg:#fcfbf7;--lx-surface:#f5f0e4;--lx-text:#16313e;--lx-muted:#6d7781;
+  --lx-bg:#fcfbf7;--lx-surface:#f5f0e4;--lx-text:#16313e;--lx-muted:#495359;
   --lx-accent:#14859a;--lx-border:#d9e2e7;--lx-danger:#b4583b;
   font-family:"Inter Variable",Inter,system-ui,-apple-system,sans-serif;
   color:var(--lx-text);
@@ -217,5 +219,5 @@ main{max-width:860px;margin:0 auto;padding:16px 16px 110px}
   .linear-trip{padding:22px 24px 28px}
 }
 @media(prefers-reduced-motion:reduce){
-  .linear-trip *, .chip, .top-actions a, .bottom-nav a, .day-card, .day-head, .map-link, .edit{transition-duration:.01ms!important}
+  .linear-trip *, .chip, .top-actions a, .bottom-nav a, .day-card, .day-head, .day-head-toggle, .map-link, .edit{transition-duration:.01ms!important}
 }
