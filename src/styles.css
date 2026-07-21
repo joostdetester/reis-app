@@ -138,6 +138,10 @@ main{max-width:860px;margin:0 auto;padding:16px 16px 110px}
 .list-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;min-width:0;box-shadow:var(--shadow)}
 .list-card.highlighted{border-color:var(--sea);box-shadow:0 0 0 3px rgba(20,133,154,.16)}
 .select-pill{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-weight:800;color:var(--ink);background:#fff}
+/* DELIBERATE a11y bug for demo purposes - light gray text on white background,
+   ~1.6:1 contrast ratio, well below WCAG AA's 4.5:1 minimum for normal text.
+   Remove this rule to restore normal contrast. */
+[data-testid="weather-forecast-destination"]{color:#cccccc}
 .list-card h3{margin:0 0 6px;font-size:1.05rem}
 .section-title{margin:18px 2px 8px}
 .bottom-nav{position:fixed;left:12px;right:12px;bottom:max(10px, env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:rgba(255,255,255,.94);backdrop-filter:blur(18px);border:1px solid rgba(21,50,65,.08);border-radius:999px;padding:8px;z-index:20;box-shadow:0 20px 42px rgba(21,50,65,.14)}
