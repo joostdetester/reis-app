@@ -110,12 +110,14 @@ function DayPhotosCard({
   onOpenPhoto,
   accessToken,
   onAccessToken,
+  onPhotosChanged,
 }: {
   day: TripDay
   photos: DayPhoto[]
   onOpenPhoto: (photoId: string) => void
   accessToken: string | null
   onAccessToken: (token: string | null) => void
+  onPhotosChanged: () => void
 }) {
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -214,6 +216,12 @@ function DayPhotosCard({
         if (result.ok) successCount++
         else failures.push(result.error)
       }
+
+      // Niet blind op de realtime-subscriptie vertrouwen: deze tab heeft net op de achtergrond
+      // gestaan terwijl je in Google's tabblad foto's koos, en de websocket-verbinding kan in
+      // die tijd zijn weggevallen — dan komen de nieuwe rijen anders pas na een handmatige
+      // paginaverversing in beeld.
+      if (successCount > 0) onPhotosChanged()
 
       if (failures.length > 0) {
         setError(`${successCount} van ${items.length} foto's toegevoegd. Mislukt: ${failures.join('; ')}`)
@@ -463,7 +471,7 @@ function Lightbox({
 
 export function PhotosPage() {
   const { days, loading: loadingDays, error: errorDays } = useTripDays()
-  const { dayPhotos, loading: loadingPhotos, error: errorPhotos } = useDayPhotos()
+  const { dayPhotos, loading: loadingPhotos, error: errorPhotos, refetch: refetchDayPhotos } = useDayPhotos()
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   // Eén Google-toegangstoken voor alle dagen én voor "Inloggen met Google" in de header: is er
   // al een (nog geldig) gedeeld token — bv. via de inlogknop — dan tonen alle dagen meteen
@@ -507,6 +515,7 @@ export function PhotosPage() {
             onOpenPhoto={openPhoto}
             accessToken={googleAccessToken}
             onAccessToken={setGoogleAccessToken}
+            onPhotosChanged={() => void refetchDayPhotos()}
           />
         ))}
       </div>
