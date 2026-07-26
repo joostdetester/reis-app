@@ -21,6 +21,8 @@ const PART_LABELS: Record<PartField, string> = {
 
 interface DayCardProps {
   day: TripDay
+  dayNumber: number
+  totalDays: number
   transportItems?: TransportItem[]
   accommodationInfo?: DayAccommodationInfo
   collapsed?: boolean
@@ -72,6 +74,8 @@ function HotelLine({ info }: { info: DayAccommodationInfo }) {
 
 export function DayCard({
   day,
+  dayNumber,
+  totalDays,
   transportItems = [],
   accommodationInfo,
   collapsed = false,
@@ -105,8 +109,13 @@ export function DayCard({
             aria-expanded={!isCollapsed}
             onClick={() => setIsCollapsed((c) => !c)}
           >
-            <div className="day-title" data-testid={`day-card-${day.id}-location`}>
-              {day.location}
+            <div className="day-title-row">
+              <div className="day-title" data-testid={`day-card-${day.id}-location`}>
+                {day.location}
+              </div>
+              <span className="day-vacation-day" data-testid={`day-card-${day.id}-vacation-day`}>
+                Dag {dayNumber} van {totalDays}
+              </span>
             </div>
             <div className="day-date" data-testid={`day-card-${day.id}-date`}>
               {fmtDate(day.travel_date)}

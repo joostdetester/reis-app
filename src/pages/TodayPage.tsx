@@ -26,10 +26,12 @@ export function TodayPage() {
       <div className="notice">
         Tijdens de reis opent de app automatisch op vandaag en morgen, zodat de hele familie direct ziet wat er op de planning staat.
       </div>
-      {upcoming.map((day) => (
+      {upcoming.map((day, index) => (
         <DayCard
           key={day.id}
           day={day}
+          dayNumber={i + index + 1}
+          totalDays={days.length}
           transportItems={transportItems}
           accommodationInfo={accommodationByDay.get(day.id)}
         />

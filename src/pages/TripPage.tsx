@@ -126,6 +126,8 @@ function TimelineView({
         >
           <DayCard
             day={d}
+            dayNumber={days.findIndex((x) => x.id === d.id) + 1}
+            totalDays={days.length}
             transportItems={transportItems}
             accommodationInfo={accommodationByDay.get(d.id)}
             collapsed={searching ? false : d.travel_date !== openDate}

@@ -106,7 +106,9 @@ main{max-width:860px;margin:0 auto;padding:16px 16px 110px}
 .day-head-toggle{all:unset;display:block;width:100%;cursor:pointer;transition:transform .12s ease}
 .day-head-toggle:active{transform:scale(.99)}
 .day-head-toggle:focus-visible{outline:2px solid var(--sea);outline-offset:2px;border-radius:8px}
+.day-title-row{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px}
 .day-title{font-weight:900;font-size:1.04rem;line-height:1.25}
+.day-vacation-day{font-size:.78rem;font-weight:700;color:var(--muted)}
 .day-date{font-size:.84rem;color:var(--muted);margin-top:4px}
 .day-hotel,.day-transport{display:block;margin-top:7px;font-size:.9rem;font-weight:800;color:var(--sea);text-decoration:none}
 .day-notice{margin-top:7px;font-size:.82rem;font-weight:800;color:#8c5f2f}
@@ -195,6 +197,7 @@ main{max-width:860px;margin:0 auto;padding:16px 16px 110px}
 .linear-trip .day-card{background:var(--lx-bg);border:1px solid var(--lx-border);border-radius:18px;box-shadow:0 10px 24px rgba(22,49,62,.05)}
 .linear-trip .day-head{padding:14px 14px 12px;background:linear-gradient(90deg, rgba(20,133,154,.08) 0%, rgba(255,255,255,.95) 100%)}
 .linear-trip .day-title{font-weight:800;font-size:.98rem}
+.linear-trip .day-vacation-day{color:var(--lx-muted)}
 .linear-trip .day-date{font-size:.8rem;color:var(--lx-muted)}
 .linear-trip .day-hotel,.linear-trip .day-transport{font-size:.84rem;font-weight:700;color:var(--lx-accent)}
 .linear-trip .day-notice{font-weight:700;color:#8d5a27}
