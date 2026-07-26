@@ -36,8 +36,15 @@ interface UploadRequest {
   token: string
   trip_day_id: string
   filename: string
-  contentType: string
-  data: string // base64, zonder data-URL-prefix
+  media_base_url: string
+  google_access_token: string
+}
+
+function extensionFor(contentType: string): string {
+  if (contentType.includes('png')) return 'png'
+  if (contentType.includes('webp')) return 'webp'
+  if (contentType.includes('gif')) return 'gif'
+  return 'jpg'
 }
 
 Deno.serve(async (req) => {
@@ -55,9 +62,12 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Ongeldige JSON' }, 400)
   }
 
-  const { slug, token, trip_day_id, filename, contentType, data } = body
-  if (!slug || !token || !trip_day_id || !filename || !contentType || !data) {
-    return jsonResponse({ error: 'slug, token, trip_day_id, filename, contentType en data zijn verplicht' }, 400)
+  const { slug, token, trip_day_id, filename, media_base_url, google_access_token } = body
+  if (!slug || !token || !trip_day_id || !filename || !media_base_url || !google_access_token) {
+    return jsonResponse(
+      { error: 'slug, token, trip_day_id, filename, media_base_url en google_access_token zijn verplicht' },
+      400,
+    )
   }
 
   const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
@@ -86,14 +96,25 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Dag niet gevonden voor deze reis' }, 404)
   }
 
-  let bytes: Uint8Array
+  // Server-naar-server: geen CORS-beperkingen zoals een browser-fetch die zou hebben (dat
+  // liep voor sommige foto's, bv. HEIC vanaf een iPhone, vast op "Failed to fetch"). De
+  // "=w-h"-formaatparameter levert altijd een web-veilige JPEG terug, ook als het origineel
+  // dat niet is — dus het échte content-type van het antwoord gebruiken, niet de bestandsnaam.
+  let photoResponse: Response
   try {
-    bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0))
+    photoResponse = await fetch(`${media_base_url}=w1600-h1600`, {
+      headers: { Authorization: `Bearer ${google_access_token}` },
+    })
   } catch {
-    return jsonResponse({ error: 'Ongeldige foto-data' }, 400)
+    return jsonResponse({ error: "Kon foto niet ophalen bij Google Photos" }, 502)
   }
+  if (!photoResponse.ok) {
+    return jsonResponse({ error: `Kon foto niet ophalen bij Google Photos (${photoResponse.status})` }, 502)
+  }
+  const contentType = photoResponse.headers.get('content-type') || 'image/jpeg'
+  const bytes = new Uint8Array(await photoResponse.arrayBuffer())
 
-  const ext = filename.split('.').pop()?.toLowerCase() || 'jpg'
+  const ext = extensionFor(contentType)
   const path = `${trip.id}/${trip_day_id}/${crypto.randomUUID()}.${ext}`
 
   const { error: uploadError } = await supabaseAdmin.storage.from('day-photos').upload(path, bytes, {

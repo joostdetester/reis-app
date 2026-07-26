@@ -9,7 +9,6 @@ import {
 } from '../lib/googleSession'
 import {
   createPickerSession,
-  downloadMediaItem,
   listSelectedMediaItems,
   waitForSelection,
   type PickerMediaItem,
@@ -175,25 +174,26 @@ function DayPhotosCard({
   }
 
   /**
-   * Download + upload van één foto, met één automatische herkansing: een los netwerkhaperinkje
-   * (bv. "Failed to fetch" bij Google's downloadlink of onze upload-functie) mag niet meteen
-   * de hele foto laten mislukken, laat staan de rest van de batch blokkeren.
+   * Upload van één foto, met één automatische herkansing: een los netwerkhaperinkje mag niet
+   * meteen de hele foto laten mislukken, laat staan de rest van de batch blokkeren. De
+   * Edge Function haalt de foto zelf bij Google op (server-naar-server, dus zonder de
+   * CORS-problemen die een download vanuit de browser kan hebben, bv. bij HEIC).
    */
   async function importOneItem(item: PickerMediaItem, token: string): Promise<{ ok: true } | { ok: false; error: string }> {
+    if (!item.mediaFile) return { ok: false, error: 'foto: geen bruikbaar mediabestand voor dit item' }
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const { base64, contentType, filename } = await downloadMediaItem(item, token)
-        await uploadDayPhoto(day.id, filename, contentType, base64)
+        await uploadDayPhoto(day.id, item.mediaFile.filename, item.mediaFile.baseUrl, token)
         return { ok: true }
       } catch (err) {
         if (attempt === 1) {
           const message = err instanceof Error ? err.message : 'Importeren is mislukt'
-          return { ok: false, error: `${item.mediaFile?.filename ?? 'foto'}: ${message}` }
+          return { ok: false, error: `${item.mediaFile.filename}: ${message}` }
         }
         await new Promise((resolve) => setTimeout(resolve, 1000))
       }
     }
-    return { ok: false, error: `${item.mediaFile?.filename ?? 'foto'}: Importeren is mislukt` }
+    return { ok: false, error: `${item.mediaFile.filename}: Importeren is mislukt` }
   }
 
   async function handleAfterPicking(token: string, activeSession: PickerSession) {

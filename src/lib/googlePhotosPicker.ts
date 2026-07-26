@@ -58,38 +58,3 @@ export async function listSelectedMediaItems(sessionId: string, accessToken: str
   )
   return result.mediaItems ?? []
 }
-
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onloadend = () => resolve((reader.result as string).split(',')[1] ?? '')
-    reader.onerror = () => reject(new Error('Kon foto niet lezen'))
-    reader.readAsDataURL(blob)
-  })
-}
-
-function extensionFor(contentType: string): string {
-  if (contentType.includes('png')) return '.png'
-  if (contentType.includes('webp')) return '.webp'
-  if (contentType.includes('gif')) return '.gif'
-  return '.jpg'
-}
-
-/** Haalt een verkleinde versie van de gekozen foto op (max 1600px) als base64. */
-export async function downloadMediaItem(
-  item: PickerMediaItem,
-  accessToken: string,
-): Promise<{ base64: string; contentType: string; filename: string }> {
-  if (!item.mediaFile) throw new Error('Geen bruikbaar mediabestand voor dit item')
-  const response = await fetch(`${item.mediaFile.baseUrl}=w1600-h1600`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
-  if (!response.ok) throw new Error(`Kon foto niet downloaden (${response.status})`)
-  const blob = await response.blob()
-  // De "=w-h"-formaatparameter levert altijd een web-veilige JPEG terug, ook als het
-  // origineel dat niet is (bv. HEIC vanaf een iPhone) — dus het échte content-type van
-  // het antwoord gebruiken, niet het mimeType/de bestandsnaam van het origineel.
-  const contentType = response.headers.get('content-type') || blob.type || 'image/jpeg'
-  const filename = item.mediaFile.filename.replace(/\.[^.]+$/, '') + extensionFor(contentType)
-  return { base64: await blobToBase64(blob), contentType, filename }
-}
