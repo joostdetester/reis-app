@@ -36,12 +36,8 @@ interface UploadRequest {
   token: string
   trip_day_id: string
   filename: string
-  // Optie 1: ophalen bij Google Photos (Picker API)
-  media_base_url?: string
-  google_access_token?: string
-  // Optie 2: rechtstreeks aangeleverde foto (bv. van dit toestel zelf, al base64-gecodeerd)
-  data?: string
-  content_type?: string
+  data: string // base64, zonder data-URL-prefix
+  content_type: string
 }
 
 function extensionFor(contentType: string): string {
@@ -66,17 +62,9 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Ongeldige JSON' }, 400)
   }
 
-  const { slug, token, trip_day_id, filename, media_base_url, google_access_token, data, content_type } = body
-  if (!slug || !token || !trip_day_id || !filename) {
-    return jsonResponse({ error: 'slug, token, trip_day_id en filename zijn verplicht' }, 400)
-  }
-  const hasGoogleSource = Boolean(media_base_url && google_access_token)
-  const hasDirectSource = Boolean(data && content_type)
-  if (!hasGoogleSource && !hasDirectSource) {
-    return jsonResponse(
-      { error: 'media_base_url+google_access_token, of data+content_type, is verplicht' },
-      400,
-    )
+  const { slug, token, trip_day_id, filename, data, content_type } = body
+  if (!slug || !token || !trip_day_id || !filename || !data || !content_type) {
+    return jsonResponse({ error: 'slug, token, trip_day_id, filename, data en content_type zijn verplicht' }, 400)
   }
 
   const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
@@ -106,41 +94,17 @@ Deno.serve(async (req) => {
   }
 
   let bytes: Uint8Array
-  let contentType: string
-  if (hasGoogleSource) {
-    // Server-naar-server: geen CORS-beperkingen zoals een browser-fetch die zou hebben (dat
-    // liep voor sommige foto's, bv. HEIC vanaf een iPhone, vast op "Failed to fetch"). De
-    // "=w-h"-formaatparameter levert altijd een web-veilige JPEG terug, ook als het origineel
-    // dat niet is — dus het échte content-type van het antwoord gebruiken, niet de bestandsnaam.
-    let photoResponse: Response
-    try {
-      photoResponse = await fetch(`${media_base_url}=w1600-h1600`, {
-        headers: { Authorization: `Bearer ${google_access_token}` },
-      })
-    } catch {
-      return jsonResponse({ error: 'Kon foto niet ophalen bij Google Photos' }, 502)
-    }
-    if (!photoResponse.ok) {
-      return jsonResponse({ error: `Kon foto niet ophalen bij Google Photos (${photoResponse.status})` }, 502)
-    }
-    contentType = photoResponse.headers.get('content-type') || 'image/jpeg'
-    bytes = new Uint8Array(await photoResponse.arrayBuffer())
-  } else {
-    // Rechtstreeks vanaf het toestel gekozen: de client heeft 'm al als base64 aangeleverd
-    // (en HEIC al zelf naar JPEG omgezet, zie prepareFileForUpload).
-    try {
-      bytes = Uint8Array.from(atob(data!), (c) => c.charCodeAt(0))
-    } catch {
-      return jsonResponse({ error: 'Ongeldige foto-data' }, 400)
-    }
-    contentType = content_type!
+  try {
+    bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0))
+  } catch {
+    return jsonResponse({ error: 'Ongeldige foto-data' }, 400)
   }
 
-  const ext = extensionFor(contentType)
+  const ext = extensionFor(content_type)
   const path = `${trip.id}/${trip_day_id}/${crypto.randomUUID()}.${ext}`
 
   const { error: uploadError } = await supabaseAdmin.storage.from('day-photos').upload(path, bytes, {
-    contentType,
+    contentType: content_type,
     upsert: false,
   })
   if (uploadError) {

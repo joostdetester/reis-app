@@ -5,7 +5,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.co https://commons.wikimedia.org; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.frankfurter.dev https://api.open-meteo.com https://www.googleapis.com https://photospicker.googleapis.com https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'"
+          "value": "default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.co https://commons.wikimedia.org; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.frankfurter.dev https://api.open-meteo.com https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'"
         },
         {
           "key": "X-Frame-Options",

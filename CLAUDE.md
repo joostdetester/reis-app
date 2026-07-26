@@ -158,16 +158,19 @@ worden ingezoomd (pinch-to-zoom) en, eenmaal ingezoomd, met één vinger gesleep
 verder in te scrollen; swipen om naar de vorige/volgende foto te gaan werkt alleen
 zolang er niet is ingezoomd.
 
-Foto's toevoegen kan alleen met edit-token, via "Foto's kiezen uit Google Photos" — dat
-opent Google's eigen kiesscherm (Google Photos Picker API) waarin een gezinslid zelf
-foto's aanwijst uit de eigen Google Photos (inclusief wat anderen in een gedeeld album
-hebben gezet). Gekozen foto's worden verkleind gedownload (altijd als web-veilige JPEG,
-ook als het origineel dat niet is, bv. HEIC vanaf een iPhone) en opgeslagen in een eigen
-Supabase Storage-bucket — geen losse embed van Google Photos zelf (bestaat niet
-betrouwbaar/officieel voor gedeelde albums). Eenmaal ingelogd bij Google voor één dag
-geldt dat voor de rest van het paginabezoek voor alle dagen; andere dagen tonen dan
-direct "Open keuzescherm" i.p.v. opnieuw de Google-inlogknop. Elke foto heeft een eigen
-verwijderknop (met bevestigingsstap).
+Foto's toevoegen kan alleen met edit-token, via "Foto's kiezen van dit toestel" — een
+standaard `<input type="file" accept="image/*" multiple>`, die op iPhone/iPad
+rechtstreeks de systeem-Foto's-app/galerij opent (geen OAuth, geen aparte inlogstap).
+HEIC-bestanden (het standaardformaat van de iPhone-camera) worden vóór het uploaden
+clientside naar JPEG omgezet (canvas + `createImageBitmap`) — dat decodeert alleen
+betrouwbaar in Safari/WebKit, wat toevallig ook de browser is waarmee je rechtstreeks
+uit de iPhone-galerij kiest. Gekozen foto's gaan als base64 naar de upload-day-photo
+Edge Function en worden opgeslagen in een eigen Supabase Storage-bucket. Elke foto
+heeft een eigen verwijderknop (met bevestigingsstap).
+
+(Eerdere versie gebruikte de Google Photos Picker API voor foto-import; die optie is
+verwijderd — "Inloggen met Google" in de header bestaat nog wel, maar puur voor
+e-mailverificatie/edit-toegang, niet meer voor foto's.)
 
 ## Praktische informatie
 

@@ -2,19 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTripDays } from '../hooks/useTripDays'
 import { useDayPhotos } from '../hooks/useDayPhotos'
 import { useHasEditAccess } from '../lib/editAccessContext'
-import { GOOGLE_CLIENT_ID, requestGooglePhotosAccessToken } from '../lib/googlePhotosAuth'
-import {
-  getGoogleAccessToken,
-  setGoogleAccessToken as cacheGoogleAccessToken,
-} from '../lib/googleSession'
-import {
-  createPickerSession,
-  listSelectedMediaItems,
-  waitForSelection,
-  type PickerMediaItem,
-  type PickerSession,
-} from '../lib/googlePhotosPicker'
-import { uploadDayPhoto, uploadDayPhotoFile } from '../lib/uploadDayPhoto'
+import { uploadDayPhotoFile } from '../lib/uploadDayPhoto'
 import { prepareFileForUpload } from '../lib/localPhotoUpload'
 import { deleteDayPhoto } from '../lib/deleteDayPhoto'
 import { fmtDate } from '../utils/dates'
@@ -97,150 +85,26 @@ function PhotoThumbnail({ photo, onOpen }: { photo: DayPhoto; onOpen: () => void
   )
 }
 
-/**
- * Zolang er nog geen gedeeld Google-toegangstoken is (deze paginabezoek), zijn het twee
- * losse tikken: mobiele browsers (vooral iOS Safari) staan meestal maar één pop-up per
- * directe gebruikersactie toe, en inloggen bij Google (via GIS) opent zelf al een pop-up.
- * Is er al een gedeeld token (van een andere dag op deze pagina eerder ingelogd), dan is
- * er nog maar één pop-up nodig (het keuzescherm zelf) — dus dan is het één tik: direct
- * "Open keuzescherm", dat zelf eerst (zonder pop-up) een nieuwe sessie aanmaakt.
- */
 function DayPhotosCard({
   day,
   photos,
   onOpenPhoto,
-  accessToken,
-  onAccessToken,
   onPhotosChanged,
 }: {
   day: TripDay
   photos: DayPhoto[]
   onOpenPhoto: (photoId: string) => void
-  accessToken: string | null
-  onAccessToken: (token: string | null) => void
   onPhotosChanged: () => void
 }) {
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [session, setSession] = useState<PickerSession | null>(null)
   const hasAccess = useHasEditAccess()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  async function handlePrepare() {
-    if (!GOOGLE_CLIENT_ID) {
-      setError('Foto-import is nog niet geconfigureerd (ontbrekende Google-client-ID).')
-      return
-    }
-    setBusy(true)
-    setError(null)
-    setStatus('Inloggen bij Google…')
-    try {
-      const { accessToken: token, expiresInSeconds } = await requestGooglePhotosAccessToken(GOOGLE_CLIENT_ID)
-      cacheGoogleAccessToken(token, expiresInSeconds)
-      onAccessToken(token)
-      setStatus('Google Photos-sessie voorbereiden…')
-      setSession(await createPickerSession(token))
-      setStatus('Klik op "Open keuzescherm" om foto\'s te kiezen.')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Inloggen bij Google is mislukt')
-      setStatus(null)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  function handleOpenPicker() {
-    if (!session || !accessToken) return
-    // Rechtstreeks in deze klik-handler, dus geen aparte async stap ervoor: dit is de
-    // enige pop-up die uit déze tik voortkomt.
-    window.open(session.pickerUri, '_blank', 'noopener,noreferrer')
-    void handleAfterPicking(accessToken, session)
-  }
-
-  /** Al ingelogd via een andere dag: sessie aanmaken (geen pop-up) én meteen openen, in één tik. */
-  async function handleQuickOpen() {
-    if (!accessToken) return
-    setBusy(true)
-    setError(null)
-    setStatus('Google Photos-sessie voorbereiden…')
-    try {
-      const newSession = await createPickerSession(accessToken)
-      window.open(newSession.pickerUri, '_blank', 'noopener,noreferrer')
-      void handleAfterPicking(accessToken, newSession)
-    } catch (err) {
-      // Token waarschijnlijk verlopen: terug naar de inlogknop voor de volgende poging.
-      onAccessToken(null)
-      setError(err instanceof Error ? err.message : 'Kon geen Google Photos-sessie starten, log opnieuw in')
-      setStatus(null)
-      setBusy(false)
-    }
-  }
-
-  /**
-   * Upload van één foto, met één automatische herkansing: een los netwerkhaperinkje mag niet
-   * meteen de hele foto laten mislukken, laat staan de rest van de batch blokkeren. De
-   * Edge Function haalt de foto zelf bij Google op (server-naar-server, dus zonder de
-   * CORS-problemen die een download vanuit de browser kan hebben, bv. bij HEIC).
-   */
-  async function importOneItem(item: PickerMediaItem, token: string): Promise<{ ok: true } | { ok: false; error: string }> {
-    if (!item.mediaFile) return { ok: false, error: 'foto: geen bruikbaar mediabestand voor dit item' }
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        await uploadDayPhoto(day.id, item.mediaFile.filename, item.mediaFile.baseUrl, token)
-        return { ok: true }
-      } catch (err) {
-        if (attempt === 1) {
-          const message = err instanceof Error ? err.message : 'Importeren is mislukt'
-          return { ok: false, error: `${item.mediaFile.filename}: ${message}` }
-        }
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-      }
-    }
-    return { ok: false, error: `${item.mediaFile.filename}: Importeren is mislukt` }
-  }
-
-  async function handleAfterPicking(token: string, activeSession: PickerSession) {
-    setBusy(true)
-    setError(null)
-    setStatus("Kies foto's in het geopende tabblad…")
-    try {
-      await waitForSelection(activeSession.id, token)
-
-      setStatus("Foto's ophalen…")
-      const items = (await listSelectedMediaItems(activeSession.id, token)).filter((item) => item.type === 'PHOTO')
-
-      const failures: string[] = []
-      let successCount = 0
-      for (let i = 0; i < items.length; i++) {
-        setStatus(`Bezig met uploaden (${i + 1}/${items.length})…`)
-        const result = await importOneItem(items[i], token)
-        if (result.ok) successCount++
-        else failures.push(result.error)
-      }
-
-      // Niet blind op de realtime-subscriptie vertrouwen: deze tab heeft net op de achtergrond
-      // gestaan terwijl je in Google's tabblad foto's koos, en de websocket-verbinding kan in
-      // die tijd zijn weggevallen — dan komen de nieuwe rijen anders pas na een handmatige
-      // paginaverversing in beeld.
-      if (successCount > 0) onPhotosChanged()
-
-      if (failures.length > 0) {
-        setError(`${successCount} van ${items.length} foto's toegevoegd. Mislukt: ${failures.join('; ')}`)
-        setStatus(null)
-      } else {
-        setStatus(items.length > 0 ? `${items.length} foto's toegevoegd.` : "Geen foto's gekozen.")
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Importeren is mislukt')
-      setStatus(null)
-    } finally {
-      setBusy(false)
-      setSession(null)
-    }
-  }
-
-  /** Upload van één rechtstreeks van dit toestel gekozen bestand, met dezelfde herkansing als importOneItem. */
+  /** Upload van één rechtstreeks van dit toestel gekozen bestand, met één automatische
+   * herkansing: een los netwerkhaperinkje mag niet meteen de hele foto laten mislukken,
+   * laat staan de rest van de batch blokkeren. */
   async function importOneFile(file: File): Promise<{ ok: true } | { ok: false; error: string }> {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
@@ -301,29 +165,6 @@ function DayPhotosCard({
       )}
       {hasAccess && (
         <>
-          {session ? (
-            <button className="chip" onClick={handleOpenPicker} disabled={busy} data-testid={`day-photos-${day.id}-add`}>
-              ➡️ Open keuzescherm
-            </button>
-          ) : accessToken ? (
-            <button
-              className="chip"
-              onClick={() => void handleQuickOpen()}
-              disabled={busy}
-              data-testid={`day-photos-${day.id}-add`}
-            >
-              ➡️ Open keuzescherm
-            </button>
-          ) : (
-            <button
-              className="chip"
-              onClick={() => void handlePrepare()}
-              disabled={busy}
-              data-testid={`day-photos-${day.id}-add`}
-            >
-              📷 Foto's kiezen uit Google Photos
-            </button>
-          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -340,7 +181,7 @@ function DayPhotosCard({
             className="chip"
             onClick={() => fileInputRef.current?.click()}
             disabled={busy}
-            data-testid={`day-photos-${day.id}-add-device`}
+            data-testid={`day-photos-${day.id}-add`}
           >
             📱 Foto's kiezen van dit toestel
           </button>
@@ -541,10 +382,6 @@ export function PhotosPage() {
   const { days, loading: loadingDays, error: errorDays } = useTripDays()
   const { dayPhotos, loading: loadingPhotos, error: errorPhotos, refetch: refetchDayPhotos } = useDayPhotos()
   const [openIndex, setOpenIndex] = useState<number | null>(null)
-  // Eén Google-toegangstoken voor alle dagen én voor "Inloggen met Google" in de header: is er
-  // al een (nog geldig) gedeeld token — bv. via de inlogknop — dan tonen alle dagen meteen
-  // "Open keuzescherm" i.p.v. opnieuw "Foto's kiezen uit Google Photos".
-  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(() => getGoogleAccessToken())
 
   const loading = loadingDays || loadingPhotos
   if (loading) return <div className="notice">Laden…</div>
@@ -581,8 +418,6 @@ export function PhotosPage() {
             day={day}
             photos={photosByDay.get(day.id) ?? []}
             onOpenPhoto={openPhoto}
-            accessToken={googleAccessToken}
-            onAccessToken={setGoogleAccessToken}
             onPhotosChanged={() => void refetchDayPhotos()}
           />
         ))}

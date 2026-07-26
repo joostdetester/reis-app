@@ -1,13 +1,12 @@
 // Laadt de Google Identity Services-library lui (pas als er echt bij Google wordt
-// ingelogd) en vraagt een tijdelijk OAuth-toegangstoken op.
+// ingelogd) en vraagt een tijdelijk OAuth-toegangstoken op, voor de "Inloggen met
+// Google"-knop in de header (verificatie van het e-mailadres, zie login-with-google).
 
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
 
 const SCRIPT_SRC = 'https://accounts.google.com/gsi/client'
-const PHOTOS_SCOPE = 'https://www.googleapis.com/auth/photospicker.mediaitems.readonly'
-// "email" geeft alleen het geverifieerde e-mailadres (voor de inlogknop op de site,
-// gecombineerd met de Photos-scope zodat dezelfde login ook meteen voor foto's werkt).
-const SITE_LOGIN_SCOPES = `email ${PHOTOS_SCOPE}`
+// "email" geeft alleen het geverifieerde e-mailadres terug.
+const SITE_LOGIN_SCOPE = 'email'
 
 interface TokenResponse {
   access_token?: string
@@ -79,12 +78,7 @@ async function requestAccessToken(clientId: string, scope: string): Promise<Goog
   })
 }
 
-/** Vraagt alleen toegang tot Google Photos (voor de "Foto's kiezen"-knop op de Foto's-pagina). */
-export function requestGooglePhotosAccessToken(clientId: string): Promise<GoogleAccessToken> {
-  return requestAccessToken(clientId, PHOTOS_SCOPE)
-}
-
-/** Vraagt e-mail + Google Photos in één keer (voor de "Inloggen met Google"-knop in de header). */
+/** Vraagt het Google-toegangstoken op voor de "Inloggen met Google"-knop in de header. */
 export function requestGoogleSiteLoginToken(clientId: string): Promise<GoogleAccessToken> {
-  return requestAccessToken(clientId, SITE_LOGIN_SCOPES)
+  return requestAccessToken(clientId, SITE_LOGIN_SCOPE)
 }

@@ -11,8 +11,7 @@ import { PhotosPage } from './pages/PhotosPage'
 import { PracticalPage } from './pages/PracticalPage'
 import { clearEditToken, setEditToken } from './lib/tripAccess'
 import { useHasEditAccess } from './lib/editAccessContext'
-import { GOOGLE_CLIENT_ID, requestGoogleSiteLoginToken } from './lib/googlePhotosAuth'
-import { setGoogleAccessToken as cacheGoogleAccessToken } from './lib/googleSession'
+import { GOOGLE_CLIENT_ID, requestGoogleSiteLoginToken } from './lib/googleAuth'
 import { loginWithGoogle } from './lib/loginWithGoogle'
 
 function Hero({
@@ -116,11 +115,9 @@ function App() {
     setLoggingIn(true)
     setLoginError(null)
     try {
-      const { accessToken, expiresInSeconds } = await requestGoogleSiteLoginToken(GOOGLE_CLIENT_ID)
+      const { accessToken } = await requestGoogleSiteLoginToken(GOOGLE_CLIENT_ID)
       const editToken = await loginWithGoogle(accessToken)
       setEditToken(editToken)
-      // Meteen ook klaar voor de Foto's-pagina: geen tweede Google-login meer nodig.
-      cacheGoogleAccessToken(accessToken, expiresInSeconds)
       window.location.reload()
     } catch (err) {
       setLoginError(err instanceof Error ? err.message : 'Inloggen met Google is mislukt')
