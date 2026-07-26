@@ -12,6 +12,7 @@ import {
   downloadMediaItem,
   listSelectedMediaItems,
   waitForSelection,
+  type PickerMediaItem,
   type PickerSession,
 } from '../lib/googlePhotosPicker'
 import { uploadDayPhoto } from '../lib/uploadDayPhoto'
@@ -173,6 +174,28 @@ function DayPhotosCard({
     }
   }
 
+  /**
+   * Download + upload van één foto, met één automatische herkansing: een los netwerkhaperinkje
+   * (bv. "Failed to fetch" bij Google's downloadlink of onze upload-functie) mag niet meteen
+   * de hele foto laten mislukken, laat staan de rest van de batch blokkeren.
+   */
+  async function importOneItem(item: PickerMediaItem, token: string): Promise<{ ok: true } | { ok: false; error: string }> {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const { base64, contentType, filename } = await downloadMediaItem(item, token)
+        await uploadDayPhoto(day.id, filename, contentType, base64)
+        return { ok: true }
+      } catch (err) {
+        if (attempt === 1) {
+          const message = err instanceof Error ? err.message : 'Importeren is mislukt'
+          return { ok: false, error: `${item.mediaFile?.filename ?? 'foto'}: ${message}` }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+      }
+    }
+    return { ok: false, error: `${item.mediaFile?.filename ?? 'foto'}: Importeren is mislukt` }
+  }
+
   async function handleAfterPicking(token: string, activeSession: PickerSession) {
     setBusy(true)
     setError(null)
@@ -183,12 +206,21 @@ function DayPhotosCard({
       setStatus("Foto's ophalen…")
       const items = (await listSelectedMediaItems(activeSession.id, token)).filter((item) => item.type === 'PHOTO')
 
+      const failures: string[] = []
+      let successCount = 0
       for (let i = 0; i < items.length; i++) {
         setStatus(`Bezig met uploaden (${i + 1}/${items.length})…`)
-        const { base64, contentType, filename } = await downloadMediaItem(items[i], token)
-        await uploadDayPhoto(day.id, filename, contentType, base64)
+        const result = await importOneItem(items[i], token)
+        if (result.ok) successCount++
+        else failures.push(result.error)
       }
-      setStatus(items.length > 0 ? `${items.length} foto's toegevoegd.` : "Geen foto's gekozen.")
+
+      if (failures.length > 0) {
+        setError(`${successCount} van ${items.length} foto's toegevoegd. Mislukt: ${failures.join('; ')}`)
+        setStatus(null)
+      } else {
+        setStatus(items.length > 0 ? `${items.length} foto's toegevoegd.` : "Geen foto's gekozen.")
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Importeren is mislukt')
       setStatus(null)
