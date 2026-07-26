@@ -14,7 +14,8 @@ import {
   type PickerMediaItem,
   type PickerSession,
 } from '../lib/googlePhotosPicker'
-import { uploadDayPhoto } from '../lib/uploadDayPhoto'
+import { uploadDayPhoto, uploadDayPhotoFile } from '../lib/uploadDayPhoto'
+import { prepareFileForUpload } from '../lib/localPhotoUpload'
 import { deleteDayPhoto } from '../lib/deleteDayPhoto'
 import { fmtDate } from '../utils/dates'
 import type { DayPhoto, TripDay } from '../types/trip'
@@ -124,6 +125,7 @@ function DayPhotosCard({
   const [busy, setBusy] = useState(false)
   const [session, setSession] = useState<PickerSession | null>(null)
   const hasAccess = useHasEditAccess()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   async function handlePrepare() {
     if (!GOOGLE_CLIENT_ID) {
@@ -238,6 +240,52 @@ function DayPhotosCard({
     }
   }
 
+  /** Upload van één rechtstreeks van dit toestel gekozen bestand, met dezelfde herkansing als importOneItem. */
+  async function importOneFile(file: File): Promise<{ ok: true } | { ok: false; error: string }> {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const { base64, contentType } = await prepareFileForUpload(file)
+        await uploadDayPhotoFile(day.id, file.name, base64, contentType)
+        return { ok: true }
+      } catch (err) {
+        if (attempt === 1) {
+          const message = err instanceof Error ? err.message : 'Importeren is mislukt'
+          return { ok: false, error: `${file.name}: ${message}` }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+      }
+    }
+    return { ok: false, error: `${file.name}: Importeren is mislukt` }
+  }
+
+  async function handleFilesSelected(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return
+    const files = Array.from(fileList)
+    setBusy(true)
+    setError(null)
+    try {
+      const failures: string[] = []
+      let successCount = 0
+      for (let i = 0; i < files.length; i++) {
+        setStatus(`Bezig met uploaden (${i + 1}/${files.length})…`)
+        const result = await importOneFile(files[i])
+        if (result.ok) successCount++
+        else failures.push(result.error)
+      }
+
+      if (successCount > 0) onPhotosChanged()
+
+      if (failures.length > 0) {
+        setError(`${successCount} van ${files.length} foto's toegevoegd. Mislukt: ${failures.join('; ')}`)
+        setStatus(null)
+      } else {
+        setStatus(`${files.length} foto's toegevoegd.`)
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="list-card" data-testid={`day-photos-${day.id}`}>
       <h3>{fmtDate(day.travel_date)}</h3>
@@ -276,6 +324,26 @@ function DayPhotosCard({
               📷 Foto's kiezen uit Google Photos
             </button>
           )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            onChange={(e) => {
+              void handleFilesSelected(e.target.files)
+              e.target.value = ''
+            }}
+            data-testid={`day-photos-${day.id}-device-input`}
+          />
+          <button
+            className="chip"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={busy}
+            data-testid={`day-photos-${day.id}-add-device`}
+          >
+            📱 Foto's kiezen van dit toestel
+          </button>
           {status && (
             <div className="muted" style={{ marginTop: 8 }} data-testid={`day-photos-${day.id}-status`}>
               {status}
