@@ -22,7 +22,7 @@ export function TodayPage() {
 
   return (
     <div data-testid="page-today">
-      <Countdown />
+      <Countdown days={days} transportItems={transportItems} />
       <div className="notice">
         Tijdens de reis opent de app automatisch op vandaag en morgen, zodat de hele familie direct ziet wat er op de planning staat.
       </div>

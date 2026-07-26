@@ -1,22 +1,39 @@
-import { countdownTo } from '../utils/dates'
+import type { TransportItem, TripDay } from '../types/trip'
+import { countdownTo, fmtLocalDateTime, todayIndex, tripPhase } from '../utils/dates'
+import { nextUpcomingFlight } from '../utils/transport'
 
-// Eerste vlucht (WY172, 23 juli 2026 20:25) staat hier nog hardcoded, zoals in de
-// vorige versie — transport_items heeft nog geen betrouwbare exacte vertrektijden
-// (zie datakwaliteitspunten in de seed-log). Wordt data-driven zodra dat is opgelost.
-const FIRST_DEPARTURE = '2026-07-23T20:25:00'
+interface CountdownProps {
+  days: TripDay[]
+  transportItems: TransportItem[]
+}
 
-export function Countdown() {
-  const { text } = countdownTo(FIRST_DEPARTURE)
+export function Countdown({ days, transportItems }: CountdownProps) {
+  const phase = tripPhase(days)
+  const upcoming = nextUpcomingFlight(days, transportItems)
+
+  const kicker = phase === 'before' ? 'Tot vertrek' : 'Vakantiedag'
+  const value =
+    phase === 'after'
+      ? 'Reis afgelopen'
+      : phase === 'during'
+        ? `Dag ${todayIndex(days) + 1} van ${days.length}`
+        : countdownTo(upcoming?.flight.departure_time ?? `${days[0]?.travel_date ?? ''}T00:00:00`).text
+
   return (
     <div className="panel countdown" data-testid="countdown">
       <div>
-        <div className="kicker">Tot vertrek</div>
-        <strong data-testid="countdown-value">{text}</strong>
+        <div className="kicker">{kicker}</div>
+        <strong data-testid="countdown-value">{value}</strong>
       </div>
-      <div className="countdown-highlight" data-testid="countdown-next-flight">
-        <div className="kicker">Eerste vlucht</div>
-        <b>WY172 · 20:25</b>
-      </div>
+      {upcoming && (
+        <div className="countdown-highlight" data-testid="countdown-next-flight">
+          <div className="kicker">Komende vlucht</div>
+          <b>{upcoming.flight.booking_reference}</b>
+          <div className="muted">{fmtLocalDateTime(upcoming.flight.departure_time, upcoming.flight.origin)}</div>
+          <div className="muted">{[upcoming.flight.origin, upcoming.flight.destination].filter(Boolean).join(' → ')}</div>
+          <div className="muted">Vakantiedag {upcoming.vacationDay}</div>
+        </div>
+      )}
     </div>
   )
 }
