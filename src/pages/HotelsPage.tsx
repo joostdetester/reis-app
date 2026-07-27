@@ -1,10 +1,121 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAccommodations } from '../hooks/useAccommodations'
 import { useTripDayAccommodations } from '../hooks/useTripDayAccommodations'
 import { useTripDays } from '../hooks/useTripDays'
 import { FieldRow } from '../components/FieldRow'
-import { fmtPhilippineDate, fmtPhilippineTime, shortDate } from '../utils/dates'
+import { EditButton } from '../components/EditButton'
+import { EditSheet } from '../components/EditSheet'
+import { saveEdit } from '../lib/saveEdit'
+import { fmtPhilippineDate, fmtPhilippineTime, fromDatetimeLocalValue, shortDate, toDatetimeLocalValue } from '../utils/dates'
+import type { Accommodation } from '../types/trip'
+
+// Alle overnachtingen vinden plaats op één vaste locatie, dus Filipijnse lokale tijd is ondubbelzinnig.
+const MANILA_ZONE = 'Asia/Manila'
+
+/** Bewerkbaar in- of uitchecktijdstip, analoog aan FlightTimeField in TransportPage. */
+function CheckInOutField({
+  acc,
+  field,
+  label,
+  icon,
+}: {
+  acc: Accommodation
+  field: 'check_in' | 'check_out'
+  label: string
+  icon: string
+}) {
+  const currentIso = acc[field]
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [confirming, setConfirming] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const testId = `hotel-${field}-${acc.id}`
+
+  function openEditor() {
+    setDraft(currentIso ? toDatetimeLocalValue(currentIso, MANILA_ZONE) : '')
+    setError(null)
+    setConfirming(false)
+    setEditing(true)
+  }
+
+  async function handleConfirm() {
+    setSaving(true)
+    setError(null)
+    try {
+      const newIso = draft ? fromDatetimeLocalValue(draft, MANILA_ZONE) : null
+      await saveEdit('accommodations', acc.id, { [field]: newIso })
+      setEditing(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Opslaan is mislukt')
+      setSaving(false)
+      setConfirming(false)
+    }
+  }
+
+  return (
+    <div className="row" data-testid={testId}>
+      <div>{icon}</div>
+      <div>
+        <div className="kicker">{label}</div>
+        <div className="value" data-testid={`${testId}-value`}>
+          {currentIso ? fmtPhilippineTime(currentIso) : '-'}
+        </div>
+      </div>
+      <EditButton onClick={openEditor} testId={`${testId}-edit`} />
+      {editing && (
+        <div className="overlay" data-testid={`${testId}-sheet`}>
+          <div className="sheet">
+            <h2>{label} bewerken</h2>
+            <input
+              type="datetime-local"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              disabled={confirming || saving}
+              data-testid={`${testId}-input`}
+            />
+            {error && (
+              <div className="notice" data-testid={`${testId}-error`}>
+                {error}
+              </div>
+            )}
+            {confirming ? (
+              <>
+                <div className="notice">Deze wijziging opslaan?</div>
+                <div className="actions">
+                  <button data-testid={`${testId}-back`} onClick={() => setConfirming(false)} disabled={saving}>
+                    Terug
+                  </button>
+                  <button
+                    data-testid={`${testId}-confirm`}
+                    className="primary"
+                    onClick={handleConfirm}
+                    disabled={saving}
+                  >
+                    {saving ? 'Bezig…' : 'Bevestigen'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="notice">Na opslaan vervangt dit de huidige informatie.</div>
+                <div className="actions">
+                  <button data-testid={`${testId}-cancel`} onClick={() => setEditing(false)}>
+                    Annuleren
+                  </button>
+                  <button data-testid={`${testId}-save`} className="primary" onClick={() => setConfirming(true)}>
+                    Opslaan
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function HotelsPage() {
   const { accommodations, loading: loadingAcc, error: errorAcc } = useAccommodations()
@@ -13,7 +124,14 @@ export function HotelsPage() {
   const [searchParams] = useSearchParams()
   const targetId = searchParams.get('item')
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const [editingNameId, setEditingNameId] = useState<string | null>(null)
   const loading = loadingAcc || loadingLinks || loadingDays
+
+  async function handleSaveName(id: string, newName: string) {
+    if (!newName) throw new Error('Naam mag niet leeg zijn')
+    await saveEdit('accommodations', id, { name: newName })
+    setEditingNameId(null)
+  }
 
   useEffect(() => {
     if (!targetId || loading) return
@@ -53,7 +171,19 @@ export function HotelsPage() {
               ref={(el) => void (el ? cardRefs.current.set(acc.id, el) : cardRefs.current.delete(acc.id))}
               data-testid={`hotel-card-${acc.id}`}
             >
-              <h3>{acc.name}</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                <h3 data-testid={`hotel-name-${acc.id}`}>{acc.name}</h3>
+                <EditButton onClick={() => setEditingNameId(acc.id)} testId={`hotel-name-${acc.id}-edit`} />
+              </div>
+              {editingNameId === acc.id && (
+                <EditSheet
+                  label="Naam"
+                  value={acc.name}
+                  onCancel={() => setEditingNameId(null)}
+                  onSave={(value) => handleSaveName(acc.id, value)}
+                  testId={`hotel-name-${acc.id}-sheet`}
+                />
+              )}
               {stayDays.length > 0 && (
                 <div className="muted" data-testid={`hotel-stay-dates-${acc.id}`}>
                   {stayDays[0].location} · Verblijf:{' '}
@@ -62,13 +192,8 @@ export function HotelsPage() {
                     : `${shortDate(stayDays[0].travel_date)} t/m ${shortDate(stayDays[stayDays.length - 1].travel_date)}`}
                 </div>
               )}
-              {(acc.check_in || acc.check_out) && (
-                <p className="muted" data-testid={`hotel-checkinout-${acc.id}`}>
-                  {acc.check_in && `Inchecken: ${fmtPhilippineTime(acc.check_in)}`}
-                  {acc.check_in && acc.check_out ? ' · ' : ''}
-                  {acc.check_out && `Uitchecken: ${fmtPhilippineTime(acc.check_out)}`}
-                </p>
-              )}
+              <CheckInOutField acc={acc} field="check_in" label="Inchecken" icon="🕐" />
+              <CheckInOutField acc={acc} field="check_out" label="Uitchecken" icon="🕐" />
               <FieldRow icon="📍" label="Adres" value={acc.address} table="accommodations" id={acc.id} field="address" />
               <FieldRow icon="📞" label="Telefoon" value={acc.phone} table="accommodations" id={acc.id} field="phone" />
               <FieldRow
