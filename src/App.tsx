@@ -85,7 +85,6 @@ function Hero({
           </Link>
         </div>
       </div>
-      <BirthdayEgg />
       <a
         className="hero-credit"
         href="https://commons.wikimedia.org/wiki/File:Beach_in_El_Nido_Bay,_pure_tropical_bliss,_Palawan,_Philippines.jpg"
@@ -148,6 +147,7 @@ function App() {
         </Routes>
       </main>
       <BottomNav />
+      <BirthdayEgg />
       {showRouteMap && (
         <div className="overlay" onClick={() => setShowRouteMap(false)} data-testid="route-map-overlay">
           <div className="sheet" onClick={(e) => e.stopPropagation()}>

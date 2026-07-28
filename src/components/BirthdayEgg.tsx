@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { isBirthdaySurpriseUnlocked } from '../utils/dates'
 
 // Guus Meeuwis & Vagant - Het Is Een Nacht... (Levensecht), officiële clip.
@@ -21,6 +21,49 @@ const STARS = [
 ]
 
 type Phase = 'closed' | 'playing' | 'revealed'
+
+interface YouTubePlayer {
+  playVideo(): void
+  pauseVideo(): void
+}
+
+interface YouTubePlayerOptions {
+  videoId: string
+  width?: number
+  height?: number
+  playerVars?: Record<string, number | string>
+}
+
+interface YouTubeIframeApi {
+  Player: new (elementId: string, options: YouTubePlayerOptions) => YouTubePlayer
+}
+
+declare global {
+  interface Window {
+    YT?: YouTubeIframeApi
+    onYouTubeIframeAPIReady?: () => void
+  }
+}
+
+/** Laadt de YouTube IFrame API (eenmalig) en geeft 'm terug zodra hij klaar is. */
+function loadYouTubeIframeApi(): Promise<YouTubeIframeApi> {
+  return new Promise((resolve) => {
+    if (window.YT?.Player) {
+      resolve(window.YT)
+      return
+    }
+    const previousCallback = window.onYouTubeIframeAPIReady
+    window.onYouTubeIframeAPIReady = () => {
+      previousCallback?.()
+      resolve(window.YT as YouTubeIframeApi)
+    }
+    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+      const script = document.createElement('script')
+      script.src = 'https://www.youtube.com/iframe_api'
+      document.body.appendChild(script)
+    }
+  })
+}
 
 /** Achterdeurtje: ?verrassing=alvast in de URL ontgrendelt het cadeau-icoon ongeacht de datum. */
 function hasPreviewOverride(): boolean {
@@ -71,6 +114,27 @@ function MoonScene() {
 export function BirthdayEgg() {
   const [unlocked] = useState(() => isBirthdaySurpriseUnlocked() || hasPreviewOverride())
   const [phase, setPhase] = useState<Phase>('closed')
+  const playerRef = useRef<YouTubePlayer | null>(null)
+
+  // Speler wordt al klaargezet zodra het icoon ontgrendeld is, zodat playVideo() bij
+  // de tik zelf synchroon aangeroepen kan worden — nodig om autoplay-met-geluid op
+  // mobiele browsers (met name iOS Safari) te laten werken.
+  useEffect(() => {
+    if (!unlocked) return
+    let cancelled = false
+    loadYouTubeIframeApi().then((YT) => {
+      if (cancelled) return
+      playerRef.current = new YT.Player('birthday-egg-player', {
+        videoId: YOUTUBE_VIDEO_ID,
+        width: 320,
+        height: 180,
+        playerVars: { controls: 0, rel: 0, playsinline: 1 },
+      })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [unlocked])
 
   useEffect(() => {
     if (phase !== 'playing') return
@@ -78,34 +142,41 @@ export function BirthdayEgg() {
     return () => clearTimeout(timer)
   }, [phase])
 
+  function handleOpen() {
+    setPhase('playing')
+    playerRef.current?.playVideo()
+  }
+
+  function handleClose() {
+    setPhase('closed')
+    playerRef.current?.pauseVideo()
+  }
+
   if (!unlocked) return null
 
   return (
     <>
       <button
         className="birthday-egg-trigger"
-        onClick={() => setPhase('playing')}
+        onClick={handleOpen}
         aria-label="Verrassing"
         data-testid="birthday-egg-trigger"
       >
         🎁
       </button>
+      <div className="birthday-egg-audio">
+        <div id="birthday-egg-player" />
+      </div>
       {phase !== 'closed' && (
         <div className="birthday-egg-overlay" data-testid="birthday-egg-overlay">
           <button
             className="birthday-egg-close"
-            onClick={() => setPhase('closed')}
+            onClick={handleClose}
             aria-label="Sluiten"
             data-testid="birthday-egg-close"
           >
             ×
           </button>
-          <iframe
-            className="birthday-egg-audio"
-            src={`https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&playsinline=1&controls=0&rel=0`}
-            title="Het Is Een Nacht... (Levensecht) - Guus Meeuwis & Vagant"
-            allow="autoplay; encrypted-media"
-          />
           <div className={`birthday-egg-scene${phase === 'revealed' ? ' is-hidden' : ''}`}>
             <MoonScene />
           </div>
