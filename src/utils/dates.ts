@@ -14,8 +14,13 @@ export function shortDate(isoDate: string): string {
   return shortFormatter.format(parseDate(isoDate))
 }
 
+/** Datum (YYYY-MM-DD) van `now` in de lokale tijdzone van het device — niet UTC, anders
+ * wisselt "vandaag" tot enkele uren te vroeg of te laat, afhankelijk van de tijdzone. */
 export function todayIso(now: Date = new Date()): string {
-  return now.toISOString().slice(0, 10)
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 /** Index van vandaag in een lijst met dagen (op travel_date), of 0 als vandaag niet in de lijst voorkomt. */

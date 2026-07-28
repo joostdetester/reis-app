@@ -253,6 +253,7 @@ main{max-width:860px;margin:0 auto;padding:16px 16px 110px}
 .birthday-egg-poster{position:absolute;inset:0;z-index:2;width:100%;height:100%;object-fit:contain;background:#0a0a14;opacity:0;transition:opacity 2.5s ease}
 .birthday-egg-poster.is-visible{opacity:1}
 .birthday-egg-close{position:absolute;top:14px;right:14px;z-index:3;width:40px;height:40px;border-radius:999px;border:0;background:rgba(255,255,255,.15);color:#fff;font-size:1.4rem;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.birthday-egg-music-hint{position:absolute;left:50%;bottom:max(24px, env(safe-area-inset-bottom));transform:translateX(-50%);z-index:3;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:11px 18px;background:rgba(255,255,255,.16);backdrop-filter:blur(8px);color:#fff;font-weight:800;font-size:.85rem;cursor:pointer;box-shadow:0 12px 28px rgba(0,0,0,.3);animation:gift-pulse 2.4s ease-in-out infinite}
 @media(prefers-reduced-motion:reduce){
   .birthday-egg-trigger{animation:none}
   .moon-scene-art .star,.moon-scene-art .moon-glow,.moon-scene-art .cloud-1,.moon-scene-art .cloud-2,.moon-scene-art .silhouette-1,.moon-scene-art .silhouette-2{animation:none}

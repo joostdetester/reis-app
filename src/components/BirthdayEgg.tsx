@@ -22,9 +22,15 @@ const STARS = [
 
 type Phase = 'closed' | 'playing' | 'revealed'
 
+const YT_PLAYER_STATE_PLAYING = 1
+
 interface YouTubePlayer {
   playVideo(): void
   pauseVideo(): void
+}
+
+interface YouTubePlayerStateChangeEvent {
+  data: number
 }
 
 interface YouTubePlayerOptions {
@@ -32,6 +38,9 @@ interface YouTubePlayerOptions {
   width?: number
   height?: number
   playerVars?: Record<string, number | string>
+  events?: {
+    onStateChange?: (event: YouTubePlayerStateChangeEvent) => void
+  }
 }
 
 interface YouTubeIframeApi {
@@ -114,11 +123,13 @@ function MoonScene() {
 export function BirthdayEgg() {
   const [unlocked] = useState(() => isBirthdaySurpriseUnlocked() || hasPreviewOverride())
   const [phase, setPhase] = useState<Phase>('closed')
+  const [isPlaying, setIsPlaying] = useState(false)
   const playerRef = useRef<YouTubePlayer | null>(null)
 
   // Speler wordt al klaargezet zodra het icoon ontgrendeld is, zodat playVideo() bij
   // de tik zelf synchroon aangeroepen kan worden — nodig om autoplay-met-geluid op
-  // mobiele browsers (met name iOS Safari) te laten werken.
+  // mobiele browsers te laten werken. Sommige browsers (met name iOS Safari) blokkeren
+  // het toch stilletjes, vandaar de "tik voor muziek"-terugval zodra isPlaying false blijft.
   useEffect(() => {
     if (!unlocked) return
     let cancelled = false
@@ -129,6 +140,9 @@ export function BirthdayEgg() {
         width: 320,
         height: 180,
         playerVars: { controls: 0, rel: 0, playsinline: 1 },
+        events: {
+          onStateChange: (event) => setIsPlaying(event.data === YT_PLAYER_STATE_PLAYING),
+        },
       })
     })
     return () => {
@@ -185,6 +199,15 @@ export function BirthdayEgg() {
             src="/images/verrassing-elsbeth.png"
             alt="Voor Elsbeth: verrassingsuitje naar Guus Meeuwis in Ahoy"
           />
+          {!isPlaying && (
+            <button
+              className="birthday-egg-music-hint"
+              onClick={() => playerRef.current?.playVideo()}
+              data-testid="birthday-egg-music-hint"
+            >
+              🎵 Tik voor muziek
+            </button>
+          )}
         </div>
       )}
     </>
