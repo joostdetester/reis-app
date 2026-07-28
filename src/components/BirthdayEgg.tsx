@@ -1,77 +1,28 @@
 import { useEffect, useRef, useState } from 'react'
 import { isBirthdaySurpriseUnlocked } from '../utils/dates'
 
-// Guus Meeuwis & Vagant - Het Is Een Nacht... (Levensecht), officiële clip.
-const YOUTUBE_VIDEO_ID = 'eIX2SZW4Ih8'
 const REVEAL_DELAY_MS = 10_000
 
-const STARS = [
-  { x: 24, y: 30, r: 1.4 },
-  { x: 60, y: 80, r: 1 },
-  { x: 100, y: 40, r: 1.6 },
-  { x: 140, y: 20, r: 1 },
-  { x: 180, y: 60, r: 1.3 },
-  { x: 20, y: 120, r: 1 },
-  { x: 340, y: 140, r: 1.2 },
-  { x: 370, y: 40, r: 1 },
-  { x: 250, y: 30, r: 1.4 },
-  { x: 60, y: 160, r: 1 },
-  { x: 320, y: 180, r: 1.1 },
-  { x: 150, y: 100, r: 1 },
-]
+const STAR_COUNT = 60
 
 type Phase = 'closed' | 'playing' | 'revealed'
 
-const YT_PLAYER_STATE_PLAYING = 1
-
-interface YouTubePlayer {
-  playVideo(): void
-  pauseVideo(): void
+interface Star {
+  top: number
+  left: number
+  size: number
+  duration: number
+  delay: number
 }
 
-interface YouTubePlayerStateChangeEvent {
-  data: number
-}
-
-interface YouTubePlayerOptions {
-  videoId: string
-  width?: number
-  height?: number
-  playerVars?: Record<string, number | string>
-  events?: {
-    onStateChange?: (event: YouTubePlayerStateChangeEvent) => void
-  }
-}
-
-interface YouTubeIframeApi {
-  Player: new (elementId: string, options: YouTubePlayerOptions) => YouTubePlayer
-}
-
-declare global {
-  interface Window {
-    YT?: YouTubeIframeApi
-    onYouTubeIframeAPIReady?: () => void
-  }
-}
-
-/** Laadt de YouTube IFrame API (eenmalig) en geeft 'm terug zodra hij klaar is. */
-function loadYouTubeIframeApi(): Promise<YouTubeIframeApi> {
-  return new Promise((resolve) => {
-    if (window.YT?.Player) {
-      resolve(window.YT)
-      return
-    }
-    const previousCallback = window.onYouTubeIframeAPIReady
-    window.onYouTubeIframeAPIReady = () => {
-      previousCallback?.()
-      resolve(window.YT as YouTubeIframeApi)
-    }
-    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
-      const script = document.createElement('script')
-      script.src = 'https://www.youtube.com/iframe_api'
-      document.body.appendChild(script)
-    }
-  })
+function generateStars(): Star[] {
+  return Array.from({ length: STAR_COUNT }, () => ({
+    top: Math.random() * 62,
+    left: Math.random() * 100,
+    size: Math.random() * 2 + 0.6,
+    duration: 1.8 + Math.random() * 2.6,
+    delay: Math.random() * 4,
+  }))
 }
 
 /** Achterdeurtje: ?verrassing=alvast in de URL ontgrendelt het cadeau-icoon ongeacht de datum. */
@@ -79,44 +30,76 @@ function hasPreviewOverride(): boolean {
   return new URLSearchParams(window.location.search).get('verrassing') === 'alvast'
 }
 
-function MoonScene() {
+const PALM_FRONDS = [
+  'M52 60 C30 50 15 30 6 10 C30 18 46 34 54 54 Z',
+  'M52 60 C34 42 26 22 24 2 C42 16 52 34 56 56 Z',
+  'M52 60 C60 38 74 22 94 12 C88 34 74 50 56 58 Z',
+  'M52 60 C66 46 84 38 100 38 C90 54 74 62 56 60 Z',
+  'M52 60 C46 40 34 26 18 20 C28 38 40 52 54 58 Z',
+]
+
+function Palm({ side }: { side: 'left' | 'right' }) {
   return (
-    <svg viewBox="0 0 400 300" className="moon-scene-art" role="presentation" aria-hidden="true">
-      <defs>
-        <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fff9e6" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="#fff9e6" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <circle className="moon-glow" cx="300" cy="70" r="70" fill="url(#moonGlow)" />
-      <circle className="moon" cx="300" cy="70" r="30" fill="#fdf6e3" />
-      {STARS.map((star, i) => (
-        <circle
-          key={`${star.x}-${star.y}`}
-          className="star"
-          style={{ animationDelay: `${(i % 6) * 0.4}s` }}
-          cx={star.x}
-          cy={star.y}
-          r={star.r}
-          fill="#fff"
-        />
-      ))}
-      <ellipse className="cloud cloud-1" cx="80" cy="60" rx="55" ry="14" fill="#fff" opacity="0.12" />
-      <ellipse className="cloud cloud-2" cx="220" cy="110" rx="40" ry="10" fill="#fff" opacity="0.08" />
-      <g className="bench-couple">
-        <rect x="110" y="230" width="140" height="6" rx="3" fill="#1a1330" />
-        <rect x="120" y="236" width="8" height="30" fill="#1a1330" />
-        <rect x="232" y="236" width="8" height="30" fill="#1a1330" />
-        <g className="silhouette silhouette-1">
-          <circle cx="165" cy="205" r="14" fill="#0f0b1e" />
-          <path d="M148 232 Q150 205 165 205 Q180 205 182 232 Z" fill="#0f0b1e" />
+    <div className={`beach-palm ${side}`}>
+      <svg viewBox="0 0 100 160" width="100%">
+        <path d="M50 160 C48 120 50 90 52 60" stroke="#050403" strokeWidth="6" fill="none" strokeLinecap="round" />
+        <g fill="#050403">
+          {PALM_FRONDS.map((d) => (
+            <path key={d} d={d} />
+          ))}
         </g>
-        <g className="silhouette silhouette-2">
-          <circle cx="195" cy="203" r="14" fill="#0f0b1e" />
-          <path d="M178 232 Q180 203 195 203 Q210 203 212 232 Z" fill="#0f0b1e" />
-        </g>
-      </g>
-    </svg>
+      </svg>
+    </div>
+  )
+}
+
+function BeachScene() {
+  const [stars] = useState(generateStars)
+
+  return (
+    <div className="beach-scene">
+      <div className="beach-stars">
+        {stars.map((star, i) => (
+          <div
+            key={i}
+            className="beach-star"
+            style={{
+              top: `${star.top}%`,
+              left: `${star.left}%`,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              animationDuration: `${star.duration}s`,
+              animationDelay: `${star.delay}s`,
+            }}
+          />
+        ))}
+      </div>
+      <div className="beach-shooting-star ss1" />
+      <div className="beach-shooting-star ss2" />
+      <div className="beach-moon" />
+      <div className="beach-sea-wrap">
+        <div className="beach-sea-layer beach-sea-layer1" />
+        <div className="beach-sea-layer beach-sea-layer2" />
+      </div>
+      <div className="beach-reflection" />
+      <Palm side="left" />
+      <Palm side="right" />
+      <div className="beach-sand" />
+      <div className="beach-figures">
+        <svg width="150" height="70" viewBox="0 0 150 70">
+          <g className="beach-person p1" fill="#050403">
+            <circle cx="52" cy="26" r="9" />
+            <path d="M40 66 C36 46 42 34 52 34 C62 34 68 46 66 66 Z" />
+            <path d="M42 50 C34 54 30 60 28 66 L34 66 C36 60 40 55 44 52 Z" />
+          </g>
+          <g className="beach-person p2" fill="#050403">
+            <circle cx="95" cy="24" r="9" />
+            <path d="M83 66 C79 44 85 32 95 32 C105 32 111 44 109 66 Z" />
+            <path d="M105 50 C113 54 117 60 119 66 L113 66 C111 60 107 55 103 52 Z" />
+          </g>
+        </svg>
+      </div>
+    </div>
   )
 }
 
@@ -124,31 +107,7 @@ export function BirthdayEgg() {
   const [unlocked] = useState(() => isBirthdaySurpriseUnlocked() || hasPreviewOverride())
   const [phase, setPhase] = useState<Phase>('closed')
   const [isPlaying, setIsPlaying] = useState(false)
-  const playerRef = useRef<YouTubePlayer | null>(null)
-
-  // Speler wordt al klaargezet zodra het icoon ontgrendeld is, zodat playVideo() bij
-  // de tik zelf synchroon aangeroepen kan worden — nodig om autoplay-met-geluid op
-  // mobiele browsers te laten werken. Sommige browsers (met name iOS Safari) blokkeren
-  // het toch stilletjes, vandaar de "tik voor muziek"-terugval zodra isPlaying false blijft.
-  useEffect(() => {
-    if (!unlocked) return
-    let cancelled = false
-    loadYouTubeIframeApi().then((YT) => {
-      if (cancelled) return
-      playerRef.current = new YT.Player('birthday-egg-player', {
-        videoId: YOUTUBE_VIDEO_ID,
-        width: 320,
-        height: 180,
-        playerVars: { controls: 0, rel: 0, playsinline: 1 },
-        events: {
-          onStateChange: (event) => setIsPlaying(event.data === YT_PLAYER_STATE_PLAYING),
-        },
-      })
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [unlocked])
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     if (phase !== 'playing') return
@@ -156,14 +115,21 @@ export function BirthdayEgg() {
     return () => clearTimeout(timer)
   }, [phase])
 
+  function playMusic() {
+    const audio = audioRef.current
+    if (!audio) return
+    audio.currentTime = 0
+    audio.play().catch(() => {})
+  }
+
   function handleOpen() {
     setPhase('playing')
-    playerRef.current?.playVideo()
+    playMusic()
   }
 
   function handleClose() {
     setPhase('closed')
-    playerRef.current?.pauseVideo()
+    audioRef.current?.pause()
   }
 
   if (!unlocked) return null
@@ -178,9 +144,13 @@ export function BirthdayEgg() {
       >
         🎁
       </button>
-      <div className="birthday-egg-audio">
-        <div id="birthday-egg-player" />
-      </div>
+      <audio
+        ref={audioRef}
+        src="/audio/verrassing.mp3"
+        preload="auto"
+        onPlaying={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+      />
       {phase !== 'closed' && (
         <div className="birthday-egg-overlay" data-testid="birthday-egg-overlay">
           <button
@@ -192,7 +162,7 @@ export function BirthdayEgg() {
             ×
           </button>
           <div className={`birthday-egg-scene${phase === 'revealed' ? ' is-hidden' : ''}`}>
-            <MoonScene />
+            <BeachScene />
           </div>
           <img
             className={`birthday-egg-poster${phase === 'revealed' ? ' is-visible' : ''}`}
@@ -200,11 +170,7 @@ export function BirthdayEgg() {
             alt="Voor Elsbeth: verrassingsuitje naar Guus Meeuwis in Ahoy"
           />
           {!isPlaying && (
-            <button
-              className="birthday-egg-music-hint"
-              onClick={() => playerRef.current?.playVideo()}
-              data-testid="birthday-egg-music-hint"
-            >
+            <button className="birthday-egg-music-hint" onClick={playMusic} data-testid="birthday-egg-music-hint">
               🎵 Tik voor muziek
             </button>
           )}
