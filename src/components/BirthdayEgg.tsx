@@ -22,6 +22,11 @@ const STARS = [
 
 type Phase = 'closed' | 'playing' | 'revealed'
 
+/** Achterdeurtje: ?verrassing=alvast in de URL ontgrendelt het cadeau-icoon ongeacht de datum. */
+function hasPreviewOverride(): boolean {
+  return new URLSearchParams(window.location.search).get('verrassing') === 'alvast'
+}
+
 function MoonScene() {
   return (
     <svg viewBox="0 0 400 300" className="moon-scene-art" role="presentation" aria-hidden="true">
@@ -64,7 +69,7 @@ function MoonScene() {
 }
 
 export function BirthdayEgg() {
-  const [unlocked] = useState(() => isBirthdaySurpriseUnlocked())
+  const [unlocked] = useState(() => isBirthdaySurpriseUnlocked() || hasPreviewOverride())
   const [phase, setPhase] = useState<Phase>('closed')
 
   useEffect(() => {
