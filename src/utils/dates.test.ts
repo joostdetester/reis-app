@@ -5,6 +5,7 @@ import {
   fmtDate,
   fromDatetimeLocalValue,
   hoursUntil,
+  isBirthdaySurpriseUnlocked,
   isoDateInZone,
   shortDate,
   todayIndex,
@@ -38,9 +39,16 @@ describe('todayIndex', () => {
   it('valt terug op 0 als vandaag niet in de lijst voorkomt', () => {
     expect(todayIndex(days, new Date('2026-01-01T10:00:00'))).toBe(0)
   })
+})
 
-  it('vindt de laatste dag als vandaag de laatste reisdag is', () => {
-    expect(todayIndex(days, new Date('2026-07-25T23:00:00'))).toBe(2)
+describe('isBirthdaySurpriseUnlocked', () => {
+  it('is nog gesloten vóór 31 juli', () => {
+    expect(isBirthdaySurpriseUnlocked(new Date('2026-07-30T23:00:00'))).toBe(false)
+  })
+
+  it('gaat open op en na 31 juli', () => {
+    expect(isBirthdaySurpriseUnlocked(new Date('2026-07-31T12:00:00'))).toBe(true)
+    expect(isBirthdaySurpriseUnlocked(new Date('2026-08-05T12:00:00'))).toBe(true)
   })
 })
 

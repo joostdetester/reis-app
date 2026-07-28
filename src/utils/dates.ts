@@ -213,6 +213,14 @@ export function formatTimeInZone(date: Date, timeZone: string): string {
   return new Intl.DateTimeFormat('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone }).format(date)
 }
 
+/** Vanaf welke datum de verjaardagsverrassing (het cadeau-icoon) zichtbaar mag worden. */
+const BIRTHDAY_SURPRISE_FROM = '2026-07-31'
+
+/** Of de verjaardagsverrassing al ontgrendeld is. */
+export function isBirthdaySurpriseUnlocked(now: Date = new Date()): boolean {
+  return todayIso(now) >= BIRTHDAY_SURPRISE_FROM
+}
+
 export type TripPhase = 'before' | 'during' | 'after'
 
 /** Bepaalt of de reis nog moet beginnen, aan de gang is, of al voorbij is (op basis van travel_date-range). */

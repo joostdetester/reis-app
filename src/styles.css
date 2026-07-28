@@ -232,3 +232,28 @@ main{max-width:860px;margin:0 auto;padding:16px 16px 110px}
 @media(prefers-reduced-motion:reduce){
   .linear-trip *, .chip, .top-actions a, .bottom-nav a, .day-card, .day-head, .day-head-toggle, .map-link, .edit{transition-duration:.01ms!important}
 }
+
+.birthday-egg-trigger{position:absolute;top:14px;right:14px;z-index:2;width:38px;height:38px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.16);backdrop-filter:blur(8px);font-size:1.1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;color:inherit;animation:gift-pulse 2.4s ease-in-out infinite}
+@keyframes gift-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.35)}50%{box-shadow:0 0 0 10px rgba(255,255,255,0)}}
+.birthday-egg-overlay{position:fixed;inset:0;background:#0a0a14;z-index:200;overflow:hidden}
+.birthday-egg-audio{position:absolute;left:-9999px;top:0;width:320px;height:180px;border:0;pointer-events:none}
+.birthday-egg-scene{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,#0b1130 0%,#1c2a5e 55%,#0a1533 100%);transition:opacity 2.5s ease;opacity:1}
+.birthday-egg-scene.is-hidden{opacity:0}
+.moon-scene-art{display:block;width:100%;height:100%}
+.moon-scene-art .star{animation:star-twinkle 2.6s ease-in-out infinite}
+.moon-scene-art .moon-glow{animation:moon-pulse 5s ease-in-out infinite;transform-origin:300px 70px}
+.moon-scene-art .cloud-1{animation:cloud-drift 18s ease-in-out infinite alternate}
+.moon-scene-art .cloud-2{animation:cloud-drift 24s ease-in-out infinite alternate-reverse}
+.moon-scene-art .silhouette-1{animation:sway 4.5s ease-in-out infinite;transform-origin:165px 232px}
+.moon-scene-art .silhouette-2{animation:sway 4.5s ease-in-out infinite .3s;transform-origin:195px 232px}
+@keyframes star-twinkle{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes moon-pulse{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
+@keyframes cloud-drift{from{transform:translateX(-20px)}to{transform:translateX(20px)}}
+@keyframes sway{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-3px) rotate(.6deg)}}
+.birthday-egg-poster{position:absolute;inset:0;z-index:2;width:100%;height:100%;object-fit:contain;background:#0a0a14;opacity:0;transition:opacity 2.5s ease}
+.birthday-egg-poster.is-visible{opacity:1}
+.birthday-egg-close{position:absolute;top:14px;right:14px;z-index:3;width:40px;height:40px;border-radius:999px;border:0;background:rgba(255,255,255,.15);color:#fff;font-size:1.4rem;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+@media(prefers-reduced-motion:reduce){
+  .birthday-egg-trigger{animation:none}
+  .moon-scene-art .star,.moon-scene-art .moon-glow,.moon-scene-art .cloud-1,.moon-scene-art .cloud-2,.moon-scene-art .silhouette-1,.moon-scene-art .silhouette-2{animation:none}
+}

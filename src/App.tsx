@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { HashRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
+import { BirthdayEgg } from './components/BirthdayEgg'
 import { BottomNav } from './components/BottomNav'
 import { RouteMap } from './components/RouteMap'
 import { WorldClock } from './components/WorldClock'
@@ -84,6 +85,7 @@ function Hero({
           </Link>
         </div>
       </div>
+      <BirthdayEgg />
       <a
         className="hero-credit"
         href="https://commons.wikimedia.org/wiki/File:Beach_in_El_Nido_Bay,_pure_tropical_bliss,_Palawan,_Philippines.jpg"
